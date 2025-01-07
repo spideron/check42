@@ -1,0 +1,26 @@
+{
+    "prefix": "aws_best_practices_",
+    "tags": [{
+            "Key": "environment",
+            "Value": "monitoring"
+        },
+        {
+            "Key": "project",
+            "Value": "aws-best-practices-checks"
+        }
+    ],
+    "dynamodb": {
+        "tables": {
+            "checks": "checks",
+            "settings": "settings",
+            "log": "log"
+        }
+    },
+    "iam": {
+        "dynamoDBPolicyName": "ddb_policy",
+        "lambdaRoleName": "lambda_role"
+    },
+    "lambda":{
+        "logItemName": "log_item"
+    }
+}
