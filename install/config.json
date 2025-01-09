@@ -1,5 +1,5 @@
 {
-    "prefix": "aws_best_practices_",
+    "prefix": "aws_best_practices",
     "tags": [{
             "Key": "environment",
             "Value": "monitoring"

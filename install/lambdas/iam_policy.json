@@ -13,9 +13,9 @@
             "dynamodb:Scan"
         ],
         "Resource": [
-            "arn:aws:dynamodb:{REGION_NAME}:{ACCOUNT_ID}:table/account_best_practices_checks",
-            "arn:aws:dynamodb:{REGION_NAME}:{ACCOUNT_ID}:table/account_best_practices_settings",
-            "arn:aws:dynamodb:{REGION_NAME}:{ACCOUNT_ID}:table/account_best_practices_log"
+            "arn:aws:dynamodb:REGION_NAME:ACCOUNT_ID:table/account_best_practices_checks",
+            "arn:aws:dynamodb:REGION_NAME:ACCOUNT_ID:table/account_best_practices_settings",
+            "arn:aws:dynamodb:REGION_NAME:ACCOUNT_ID:table/account_best_practices_log"
         ]
     }]
 }
