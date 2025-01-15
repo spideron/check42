@@ -22,7 +22,7 @@ class DDBStack(Stack):
         
         self.create_table(checks_table_name, table_name=checks_table_name)
         self.create_table(settings_table_name, table_name=settings_table_name)
-        self.create_table(log_table_name, table_name=log_table_name,removal_policy=RemovalPolicy.RETAIN)
+        self.create_table(log_table_name, table_name=log_table_name)
 
 
     def create_table(self, table_id: str, table_name: str, removal_policy=RemovalPolicy.DESTROY) -> dynamodb.Table:

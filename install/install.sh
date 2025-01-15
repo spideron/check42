@@ -1,6 +1,12 @@
 #!/bin/sh
 
-cd cdk
-source .venv/bin/activate
+export AWS_DEFAULT_REGION=''
+export AWS_DEFAULT_ACCOUNT=''
 
-cdk deploy
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+sudo npm install -g aws-cdk@latest
+
+cd cdk
+
+cdk deploy --all --require-approval never
