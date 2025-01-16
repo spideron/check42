@@ -4,6 +4,7 @@ import json
 import aws_cdk as cdk
 from cdk.iam_stack import IAMStack
 from cdk.ddb_stack import DDBStack
+from cdk.lambda_stack import LambdaStack
 
 region = os.getenv('AWS_DEFAULT_REGION')
 account = os.getenv('AWS_DEFAULT_ACCOUNT')
@@ -20,10 +21,15 @@ DDBStack(app, "DDBStack",
     config=install_config
 )
 
-IAMStack(app, "IAMStack",
+iam_stack = IAMStack(app, "IAMStack",
+    env=cdk.Environment(account=account, region=region),
+    config=install_config
+)
+
+LambdaStack(app, "LambdaStack",
     env=cdk.Environment(account=account, region=region),
     config=install_config,
-    iam_policy_document=iam_policy_document
+    lambda_role=iam_stack.dynamodb_lambda_role
 )
 
 app.synth()

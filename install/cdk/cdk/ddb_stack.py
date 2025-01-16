@@ -8,7 +8,7 @@ from constructs import Construct
 from cdk.app_utils import AppUtils
 
 class DDBStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, config, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: dict, **kwargs) -> None:
         """
         Create DynamoDB tables
         """
@@ -16,14 +16,11 @@ class DDBStack(Stack):
 
         self.app_tags = config['tags']
         app_utils = AppUtils(config)
-        checks_table_name = app_utils.get_name_with_prefix(config['dynamodb']['tables']['checks'])
-        settings_table_name = app_utils.get_name_with_prefix(config['dynamodb']['tables']['settings'])
-        log_table_name = app_utils.get_name_with_prefix(config['dynamodb']['tables']['log'])
         
-        self.create_table(checks_table_name, table_name=checks_table_name)
-        self.create_table(settings_table_name, table_name=settings_table_name)
-        self.create_table(log_table_name, table_name=log_table_name)
-
+        for t in config['dynamodb']['tables']:
+            t_name = app_utils.get_name_with_prefix(t)
+            self.create_table(t_name, table_name=t_name)
+        
 
     def create_table(self, table_id: str, table_name: str, removal_policy=RemovalPolicy.DESTROY) -> dynamodb.Table:
         """
@@ -35,7 +32,7 @@ class DDBStack(Stack):
             removal_policy=removal_policy
         )
         
-        # Add tags to table
+        # Add tags to the table
         for t in self.app_tags:
             Tags.of(table).add(key=t['Key'], value=t['Value'])
 

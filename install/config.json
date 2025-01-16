@@ -10,17 +10,22 @@
         }
     ],
     "dynamodb": {
-        "tables": {
-            "checks": "checks",
-            "settings": "settings",
-            "log": "log"
-        }
+        "tables": ["checks", "settings", "log"]
     },
     "iam": {
         "dynamoDBPolicyName": "ddb_policy",
         "lambdaRoleName": "lambda_role"
     },
     "lambda":{
-        "logItemName": "log_item"
+        "defaults":{
+            "memory": 128,
+            "timeout": 5
+        },
+        "functions":{
+            "logItemName": {
+                "functionName": "log_item",
+                "fileLocation": "lambdas/aws_best_practices_log_item.py"
+            }
+        }
     }
 }
