@@ -25,6 +25,10 @@
             "logItemName": {
                 "functionName": "log_item",
                 "fileLocation": "lambdas/aws_best_practices_log_item.py"
+            },
+            "settings": {
+                "functionName": "settings",
+                "fileLocation": "lambdas/aws_best_practices_settings.py"
             }
         }
     }

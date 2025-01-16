@@ -26,6 +26,7 @@ class LambdaStack(Stack):
         self.app_utils = AppUtils(config)
         
         self.create_lambda_function(config['lambda']['functions']['logItemName'], lambda_role)
+        self.create_lambda_function(config['lambda']['functions']['settings'], lambda_role)
         
 
     def create_lambda_function(self, function_conf: dict, iam_role: iam.Role) -> None:
