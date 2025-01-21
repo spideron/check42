@@ -28,7 +28,8 @@
             },
             "settings": {
                 "functionName": "settings",
-                "fileLocation": "lambdas/aws_best_practices_settings.py"
+                "fileLocation": "lambdas/aws_best_practices_settings.py",
+                "dependencies": ["cron_validator"]
             }
         }
     }

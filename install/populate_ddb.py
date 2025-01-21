@@ -18,8 +18,8 @@ def get_name_with_prefix(name):
     return '{}_{}'.format(install_config['prefix'], name)
 
 # Initialize DynamoDB objects
-ddb_checks_table = ddb.DynamoDBHandler(get_name_with_prefix(install_config['dynamodb']['tables']['checks']), region)
-ddb_settings_table = ddb.DynamoDBHandler(get_name_with_prefix(install_config['dynamodb']['tables']['settings']), region)
+ddb_checks_table = ddb.DynamoDBHandler(get_name_with_prefix('checks'), region)
+ddb_settings_table = ddb.DynamoDBHandler(get_name_with_prefix('settings'), region)
 
 # Populate the checks table
 for m in checks_config['modules']:
