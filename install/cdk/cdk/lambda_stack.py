@@ -20,13 +20,14 @@ class LambdaStack(Stack):
         """
         super().__init__(scope, construct_id, **kwargs)
         
+        self.lambda_functions = {}
         self.app_tags = config['tags']
         self.lambda_default_memory = config['lambda']['defaults']['memory']
         self.lambda_default_timeout = config['lambda']['defaults']['timeout']
         self.app_utils = AppUtils(config)
         
-        self.create_lambda_function(config['lambda']['functions']['logItemName'], lambda_role)
-        self.create_lambda_function(config['lambda']['functions']['settings'], lambda_role)
+        for f_name in config['lambda']['functions']:
+            self.create_lambda_function(config['lambda']['functions'][f_name], lambda_role)
         
 
     def create_lambda_function(self, function_conf: dict, iam_role: iam.Role) -> None:
@@ -59,6 +60,7 @@ class LambdaStack(Stack):
         lambda_function = _lambda.Function(
             self, 
             function_name,
+            function_name = function_name,
             runtime=_lambda.Runtime.PYTHON_3_10,
             handler='{}.handler'.format(function_name),
             code=_lambda.Code.from_asset(self.app_utils.deployment_name(function_name)),
@@ -70,6 +72,8 @@ class LambdaStack(Stack):
         # Add tags to the function
         for t in self.app_tags:
             Tags.of(lambda_function).add(key=t['Key'], value=t['Value'])
+            
+        self.lambda_functions[function_name] = lambda_function
 
     def create_deployment_package(self, lambda_name: str, file_location: str, dependencies=[]):
         """
