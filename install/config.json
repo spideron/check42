@@ -14,6 +14,7 @@
     },
     "iam": {
         "dynamoDBPolicyName": "ddb_policy",
+        "eventBridgeRulePolicyName": "event_bridge_rule_policy",
         "lambdaRoleName": "lambda_role"
     },
     "lambda":{
@@ -33,6 +34,10 @@
             "checks": {
                 "functionName": "checks",
                 "fileLocation": "lambdas/aws_best_practices_checks.py"
+            },
+            "schedule": {
+                "functionName": "schedule",
+                "fileLocation": "lambdas/aws_best_practices_schedule.py"
             }
         }
     }

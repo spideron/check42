@@ -32,7 +32,7 @@ iam_stack = IAMStack(app, "IAMStack",
 lambda_stack = LambdaStack(app, "LambdaStack",
     env=cdk.Environment(account=account, region=region),
     config=install_config,
-    lambda_role=iam_stack.dynamodb_lambda_role
+    lambda_role=iam_stack.lambda_role
 )
 
 events_stack = EventsStack(app, "EventsStack",

@@ -19,6 +19,7 @@ class EventsStack(Stack):
         rule = events.Rule(
             self,
             "DailyBestPracticesCheck",
+            rule_name = "DailyBestPracticesCheck",
             schedule=events.Schedule.cron(
                 minute="0",
                 hour="0",  # Run at midnight UTC

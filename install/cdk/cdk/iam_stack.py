@@ -20,16 +20,21 @@ class IAMStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         app_utils = AppUtils(config)
-        policy_name = app_utils.get_name_with_prefix(config['iam']['dynamoDBPolicyName'])
+        ddb_policy_name = app_utils.get_name_with_prefix(config['iam']['dynamoDBPolicyName'])
+        rule_policy_name = app_utils.get_name_with_prefix(config['iam']['eventBridgeRulePolicyName'])
+        
         dynamodb_tables = []
         for t in config['dynamodb']['tables']:
             dynamodb_tables.append(app_utils.get_name_with_prefix(t))
         
         # Create IAM policy to access the DynamoDB Tables
-        iam_policy = self.create_dynamodb_iam_policy(policy_name, dynamodb_tables)
+        ddb_iam_policy = self.create_dynamodb_iam_policy(ddb_policy_name, dynamodb_tables)
         
-        # Create a role to be used by a Lambda function to access DynamoDB
-        self.dynamodb_lambda_role = iam.Role(
+        # Create IAM policy to access EventBridge rules
+        event_iam_policy = self.create_event_bridge_rule_poicy(rule_policy_name)
+        
+        # Create a role to be used by a Lambda function
+        self.lambda_role = iam.Role(
             self,
             app_utils.get_name_with_prefix(config['iam']['lambdaRoleName']),
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
@@ -38,7 +43,8 @@ class IAMStack(Stack):
             ]
         )
         
-        self.dynamodb_lambda_role.add_managed_policy(iam_policy)
+        self.lambda_role.add_managed_policy(ddb_iam_policy)
+        self.lambda_role.add_managed_policy(event_iam_policy)
         
         
     def create_dynamodb_iam_policy(self, policy_name: str, tables: list) -> iam.ManagedPolicy:
@@ -81,3 +87,35 @@ class IAMStack(Stack):
         )
         
         return lambda_dynamodb_policy
+
+
+    def create_event_bridge_rule_poicy(self, policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create an EventBridge rule IAM policy
+        
+        Args:
+            policy_name (str): The IAM policy name
+        """
+        
+        # Create IAM policy document
+        rule_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "events:DescribeRule",
+                        "events:PutRule"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        lambda_rule_policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=rule_policy
+        )
+        
+        return lambda_rule_policy
