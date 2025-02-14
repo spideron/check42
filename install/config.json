@@ -40,5 +40,15 @@
                 "fileLocation": "lambdas/aws_best_practices_schedule.py"
             }
         }
+    },
+    "schedule": {
+        "ruleNmae": "schedule",
+        "defaultSchedule": {
+            "minute": "0",
+            "hour": "0",
+            "day": "*",
+            "month": "*",
+            "year": "*"
+        }
     }
 }

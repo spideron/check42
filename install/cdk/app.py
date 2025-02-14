@@ -36,9 +36,13 @@ lambda_stack = LambdaStack(app, "LambdaStack",
 )
 
 events_stack = EventsStack(app, "EventsStack",
-    env=cdk.Environment(account=account, region=region)
+    env=cdk.Environment(account=account, region=region),
+    config=install_config,
 )
 checks_function_name = app_utils.get_name_with_prefix(install_config['lambda']['functions']['checks']['functionName'])
-events_stack.create_lambda_event(lambda_stack.lambda_functions[checks_function_name])
+events_stack.create_lambda_event(
+    lambda_stack.lambda_functions[checks_function_name],
+    install_config['schedule']
+)
 
 app.synth()
