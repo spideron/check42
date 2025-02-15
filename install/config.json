@@ -35,11 +35,18 @@
                 "functionName": "checks",
                 "fileLocation": "lambdas/aws_best_practices_checks.py"
             },
+            "run": {
+                "functionName": "run",
+                "fileLocation": "lambdas/aws_best_practices_run.py"
+            },
             "schedule": {
                 "functionName": "schedule",
                 "fileLocation": "lambdas/aws_best_practices_schedule.py"
             }
         }
+    },
+    "api": {
+      
     },
     "schedule": {
         "ruleNmae": "schedule",
