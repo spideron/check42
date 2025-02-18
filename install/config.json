@@ -15,7 +15,8 @@
     "iam": {
         "dynamoDBPolicyName": "ddb_policy",
         "eventBridgeRulePolicyName": "event_bridge_rule_policy",
-        "lambdaRoleName": "lambda_role"
+        "lambdaRoleName": "lambda_role",
+        "snsPolicyName": "sns_policy"
     },
     "lambda":{
         "defaults":{
@@ -47,6 +48,10 @@
     },
     "api": {
       
+    },
+    "sns": {
+      "topicName": "checks",
+      "emailSubject": "AWS Best Practices Checks"
     },
     "schedule": {
         "ruleNmae": "schedule",
