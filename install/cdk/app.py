@@ -8,6 +8,7 @@ from cdk.ddb_stack import DDBStack
 from cdk.lambda_stack import LambdaStack
 from cdk.events_stack import EventsStack
 from cdk.sns_stack import SNSStack
+from cdk.config_stack import ConfigStack
 from cdk.app_utils import AppUtils
 
 region = os.getenv('AWS_DEFAULT_REGION')
@@ -33,8 +34,15 @@ install_config = json.load(install_config_file)
 iam_policy_file = open(cwd + '/../lambdas/iam_policy.json')
 iam_policy_document = iam_policy_file.read().replace('REGION_NAME', region).replace('ACCOUNT_ID', account)
 app_utils = AppUtils(install_config)
+app_tags = install_config['tags']
+
 
 app = cdk.App()
+
+# Add tags in the app level
+for t in app_tags:
+    cdk.Tags.of(app).add(key=t['Key'], value=t['Value'])
+    
 DDBStack(app, "DDBStack",
     env=cdk.Environment(account=account, region=region),
     config=install_config
@@ -60,6 +68,12 @@ events_stack.create_lambda_event(
     lambda_stack.lambda_functions[checks_function_name],
     install_config['schedule']
 )
+
+config_stack = ConfigStack(app, "ConfigStack",
+    env=cdk.Environment(account=account, region=region)
+)
+config_role = iam_stack.create_config_role(install_config['iam']['configRoleName'])
+config_stack.create_required_tags_rule(config_role, install_config['configRules'])
 
 sns_stack = SNSStack(app, "SNSSTack",
     env=cdk.Environment(account=account, region=region),

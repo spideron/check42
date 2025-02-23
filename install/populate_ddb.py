@@ -42,6 +42,9 @@ for m in checks_config['modules']:
                 "muted": {'BOOL': False}
             }
         
+        if 'config' in c:
+            item['config'] = {'S': json.dumps(c['config'])}
+        
         ddb_checks_table.put_item(item)
 
 # Populate the settings table

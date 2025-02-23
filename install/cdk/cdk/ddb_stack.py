@@ -14,7 +14,6 @@ class DDBStack(Stack):
         """
         super().__init__(scope, construct_id, **kwargs)
 
-        self.app_tags = config['tags']
         app_utils = AppUtils(config)
         
         for t in config['dynamodb']['tables']:
@@ -32,8 +31,4 @@ class DDBStack(Stack):
             removal_policy=removal_policy
         )
         
-        # Add tags to the table
-        for t in self.app_tags:
-            Tags.of(table).add(key=t['Key'], value=t['Value'])
-
         return table

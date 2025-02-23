@@ -24,6 +24,8 @@ class IAMStack(Stack):
         rule_policy_name = app_utils.get_name_with_prefix(config['iam']['eventBridgeRulePolicyName'])
         sns_policy_name = app_utils.get_name_with_prefix(config['iam']['snsPolicyName'])
         sns_topic_name = app_utils.get_name_with_prefix(config['sns']['topicName'])
+        config_rule_policy_name = app_utils.get_name_with_prefix(config['iam']['configRulePolicyName'])
+        config_rule_name = config['configRules']['ruleName']
         
         dynamodb_tables = []
         for t in config['dynamodb']['tables']:
@@ -38,6 +40,9 @@ class IAMStack(Stack):
         # Create IAM policy for SNS
         sns_iam_policy = self.create_sns_publish_policy(sns_policy_name, sns_topic_name)
         
+        # Create IAM policy for config rules
+        config_rules_policy = self.create_config_rule_policy(config_rule_policy_name)
+        
         # Create a role to be used by a Lambda function
         self.lambda_role = iam.Role(
             self,
@@ -51,6 +56,7 @@ class IAMStack(Stack):
         self.lambda_role.add_managed_policy(ddb_iam_policy)
         self.lambda_role.add_managed_policy(event_iam_policy)
         self.lambda_role.add_managed_policy(sns_iam_policy)
+        self.lambda_role.add_managed_policy(config_rules_policy)
         
         
     def create_dynamodb_iam_policy(self, policy_name: str, tables: list) -> iam.ManagedPolicy:
@@ -156,3 +162,52 @@ class IAMStack(Stack):
         )
         
         return policy
+    
+    
+    def create_config_rule_policy(self, policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create a config rule IAM Policy
+        
+        Args:
+            policy_name (str): The IAM Policy name
+            
+        Returns (iam.ManagedPolicy): IAM managed policy
+        """
+        
+        # Create IAM policy document
+        config_rule_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "config:GetComplianceDetailsByConfigRule"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=config_rule_policy
+        )
+        
+        return policy
+        
+    
+    def create_config_role(self, role_name:str) -> iam.Role:
+        """
+        Create an IAM role for AWS Config
+        """
+        config_role = iam.Role(
+            self,
+            role_name,
+            assumed_by=iam.ServicePrincipal("config.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWS_ConfigRole")
+            ]
+        )
+        
+        return config_role

@@ -16,7 +16,12 @@
             },
             {
                 "name": "MISSING_TAGS",
-                "template": "One or more resources are missing tags. Please add tags to AWS resources. https://docs.aws.amazon.com/tag-editor/latest/userguide/tagging.html. TODO: add formated version of resources"
+                "template": "One or more resources are missing tags. Please add tags to AWS resources. https://docs.aws.amazon.com/tag-editor/latest/userguide/tagging.html. TODO: add formated version of resources",
+                "config":{
+                    "regions": ["us-west-2"],
+                    "configRuleName": "required_tags_rule",
+                    "requiredTags": ["environment", "project"]
+                }
             },
             {
                 "name": "NO_BUSINESS_SUPPORT",

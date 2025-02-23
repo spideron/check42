@@ -21,7 +21,6 @@ class LambdaStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         self.lambda_functions = {}
-        self.app_tags = config['tags']
         self.lambda_default_memory = config['lambda']['defaults']['memory']
         self.lambda_default_timeout = config['lambda']['defaults']['timeout']
         self.app_utils = AppUtils(config)
@@ -69,10 +68,6 @@ class LambdaStack(Stack):
             role=iam_role
         )
         
-        # Add tags to the function
-        for t in self.app_tags:
-            Tags.of(lambda_function).add(key=t['Key'], value=t['Value'])
-            
         self.lambda_functions[function_name] = lambda_function
 
     def create_deployment_package(self, lambda_name: str, file_location: str, dependencies=[]):
@@ -94,6 +89,10 @@ class LambdaStack(Stack):
 
         # Copy the Lambda function to the temp directory
         shutil.copy('../{}'.format(file_location), 'temp/')
+        
+        # Copy the modules and lib folders
+        shutil.copytree('../lambdas/lib', 'temp/lib')
+        shutil.copytree('../lambdas/modules', 'temp/modules')
         
         # Install dependencies (if there are any) and copy them to the temp directory
         if len(dependencies) > 0:

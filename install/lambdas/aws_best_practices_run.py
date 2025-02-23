@@ -2,6 +2,7 @@ import os
 import boto3
 import json
 from botocore.exceptions import ClientError
+from modules.basic import Basic
 
 def get_checks():
     """
@@ -26,18 +27,16 @@ def get_checks():
     
     except ClientError as e:
         print("Error: {}".format(e.response['Error']['Message']))
-        return None
+        raise(e)
     except Exception as e:
         print("Error: {}".format(str(e)))
-        return None
+        raise(e)
+
 
 def send_notification(message):
     """
     Send a notification to an SNS topic
     """
-    
-    print(message)
- 
     try:
         region = os.environ['AWS_REGION']
         sts_client = boto3.client('sts')
@@ -57,19 +56,37 @@ def send_notification(message):
     
     except Exception as e:
         print("Error: {}".format(str(e)))
+        raise(e)
 
-    
 
-def handler(event, context):
-    errors=[]
-    statusCode = 200
-    headers = {
-        "Content-Type": "application/json"
-    }
+def run_checks() -> list:
+    """
+    Run the scheduled checks
     
+    Returns (list): A list of checks to report on
+    """
+    
+    results = []
     checks = get_checks()
+    
     if checks is not None:
-        for c in checks:
-            print(c)
+        basic_checks = [item for item in checks if item['module'] == 'basic']
+        
+        if len(basic_checks) > 0:
+            basic_checker = Basic(basic_checks)
+            basic_checks_results = basic_checker.run_checks()
+            results.extend(basic_checks_results)
             
-        send_notification("Congrats, all checks passed")
+    return results
+        
+        
+def handler(event, context):
+    results = run_checks()
+    message = "All checks passed! Nothing to do"
+    
+    if len(results) > 0:
+        message = results
+    
+    print(message)
+    
+    send_notification(message)
