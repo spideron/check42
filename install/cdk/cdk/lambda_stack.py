@@ -23,6 +23,7 @@ class LambdaStack(Stack):
         self.lambda_functions = {}
         self.lambda_default_memory = config['lambda']['defaults']['memory']
         self.lambda_default_timeout = config['lambda']['defaults']['timeout']
+        self.include_folders = config['lambda']['includeFolders']
         self.app_utils = AppUtils(config)
         
         for f_name in config['lambda']['functions']:
@@ -41,7 +42,9 @@ class LambdaStack(Stack):
         function_name = self.app_utils.get_name_with_prefix(function_conf['functionName'])
         function_timeout = self.lambda_default_timeout
         function_memory = self.lambda_default_memory
+        function_environment = None
         function_dependencies = []
+        include_folders = self.include_folders
         
         if 'memory' in function_conf:
             function_memory = function_conf['memory']
@@ -52,8 +55,14 @@ class LambdaStack(Stack):
         if 'dependencies' in function_conf:
             function_dependencies = function_conf['dependencies']
         
+        if 'environment' in function_conf:
+            function_environment = function_conf['environment']
+        
+        if 'includeFolders' in function_conf:
+            include_folders.extend(function_conf['includeFolders'])
+        
         # Create deployment package for the log item function
-        self.create_deployment_package(function_name, function_file_location, function_dependencies)
+        self.create_deployment_package(function_name, function_file_location, include_folders, function_dependencies)
         
         # Create Lambda function
         lambda_function = _lambda.Function(
@@ -65,18 +74,21 @@ class LambdaStack(Stack):
             code=_lambda.Code.from_asset(self.app_utils.deployment_name(function_name)),
             timeout=Duration.seconds(function_timeout),
             memory_size=function_memory,
+            environment = function_environment,
             role=iam_role
         )
         
         self.lambda_functions[function_name] = lambda_function
 
-    def create_deployment_package(self, lambda_name: str, file_location: str, dependencies=[]):
+
+    def create_deployment_package(self, lambda_name: str, file_location: str, include_folders: list, dependencies=[]):
         """
         Create a Lambda Function deployment package
         
         Args:
             lambda_name (str): The name of the Lambda Function
             file_location (str): The location of the Lambda Function code
+            include_folders (list): A list of folder to include in the package
             dependencies (list): List of dependencies to install. Default: empty list
         """
         
@@ -90,9 +102,8 @@ class LambdaStack(Stack):
         # Copy the Lambda function to the temp directory
         shutil.copy('../{}'.format(file_location), 'temp/')
         
-        # Copy the modules and lib folders
-        shutil.copytree('../lambdas/lib', 'temp/lib')
-        shutil.copytree('../lambdas/modules', 'temp/modules')
+        for f in include_folders:
+            shutil.copytree(f'../lambdas/{f}', f'temp/{f}')
         
         # Install dependencies (if there are any) and copy them to the temp directory
         if len(dependencies) > 0:
@@ -109,5 +120,9 @@ class LambdaStack(Stack):
                     zipf.write(file_path, arcname)
 
         # Clean up temporary directory
-        shutil.rmtree('temp')
-        shutil.rmtree('build')
+        if os.path.exists('temp'):
+            shutil.rmtree('temp')
+        
+        if os.path.exists('build'):
+            shutil.rmtree('build')
+        

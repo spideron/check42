@@ -17,6 +17,7 @@
         "eventBridgeRulePolicyName": "event_bridge_rule_policy",
         "lambdaRoleName": "lambda_role",
         "snsPolicyName": "sns_policy",
+        "sesPolicyName": "ses_policy",
         "configRulePolicyName": "required_tags_policy",
         "configRoleName": "config_role"
     },
@@ -25,6 +26,7 @@
             "memory": 128,
             "timeout": 5
         },
+        "includeFolders": ["lib", "modules"],
         "functions":{
             "logItemName": {
                 "functionName": "log_item",
@@ -40,7 +42,12 @@
             },
             "run": {
                 "functionName": "run",
-                "fileLocation": "lambdas/aws_best_practices_run.py"
+                "fileLocation": "lambdas/aws_best_practices_run.py",
+                "environment": {
+                    "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable",
+                    "recipientEmail": "SET RECIPIENT EMAIL ADDRESS HERE OR USE AWS_RECIPIENT_EMAIL environment variable"
+                },
+                "includeFolders": ["email_templates"]
             },
             "schedule": {
                 "functionName": "schedule",
@@ -87,9 +94,8 @@
     "api": {
       
     },
-    "sns": {
-      "topicName": "checks",
-      "emailSubject": "AWS Best Practices Checks"
+    "ses": {
+        "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable"
     },
     "schedule": {
         "ruleNmae": "schedule",

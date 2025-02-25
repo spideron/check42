@@ -22,8 +22,8 @@ class IAMStack(Stack):
         app_utils = AppUtils(config)
         ddb_policy_name = app_utils.get_name_with_prefix(config['iam']['dynamoDBPolicyName'])
         rule_policy_name = app_utils.get_name_with_prefix(config['iam']['eventBridgeRulePolicyName'])
-        sns_policy_name = app_utils.get_name_with_prefix(config['iam']['snsPolicyName'])
-        sns_topic_name = app_utils.get_name_with_prefix(config['sns']['topicName'])
+        ses_policy_name = app_utils.get_name_with_prefix(config['iam']['sesPolicyName'])
+        ses_sender_email = config['ses']['senderEmail']
         config_rule_policy_name = app_utils.get_name_with_prefix(config['iam']['configRulePolicyName'])
         config_rule_name = config['configRules']['ruleName']
         
@@ -37,8 +37,8 @@ class IAMStack(Stack):
         # Create IAM policy to access EventBridge rules
         event_iam_policy = self.create_event_bridge_rule_poicy(rule_policy_name)
         
-        # Create IAM policy for SNS
-        sns_iam_policy = self.create_sns_publish_policy(sns_policy_name, sns_topic_name)
+        # Create IAM policy for SES
+        ses_iam_policy = self.create_ses_policy(ses_policy_name, ses_sender_email)
         
         # Create IAM policy for config rules
         config_rules_policy = self.create_config_rule_policy(config_rule_policy_name)
@@ -55,7 +55,7 @@ class IAMStack(Stack):
         
         self.lambda_role.add_managed_policy(ddb_iam_policy)
         self.lambda_role.add_managed_policy(event_iam_policy)
-        self.lambda_role.add_managed_policy(sns_iam_policy)
+        self.lambda_role.add_managed_policy(ses_iam_policy)
         self.lambda_role.add_managed_policy(config_rules_policy)
         
         
@@ -131,25 +131,27 @@ class IAMStack(Stack):
         )
         
         return policy
+
         
-    def create_sns_publish_policy(self, policy_name:str, topic_name:str) -> iam.ManagedPolicy:
+    def create_ses_policy(self, policy_name: str, sender_email: str) -> iam.ManagedPolicy:
         """
-        Create an SNS IAM Policy
+        Create SES IAM Policy
         
         Args:
             policy_name (str): The IAM policy name
-            topic_name (str): The SNS topic name
+            sender_email (str): The SES sender email address
         """
         
         # Create IAM policy document
-        sns_policy = iam.PolicyDocument(
+        ses_policy = iam.PolicyDocument(
             statements=[
                 iam.PolicyStatement(
                     effect=iam.Effect.ALLOW,
                     actions=[
-                        "sns:Publish"
+                        'ses:SendEmail',
+                        'ses:SendRawEmail'
                     ],
-                    resources=["arn:aws:sns:{}:{}:{}".format(self.region, self.account, topic_name)]
+                    resources=[f'arn:aws:ses:{self.region}:{self.account}:identity/{sender_email}']
                 )
             ]
         )
@@ -158,11 +160,11 @@ class IAMStack(Stack):
         policy = iam.ManagedPolicy(
             self,
             policy_name,
-            document=sns_policy
+            document=ses_policy
         )
         
         return policy
-    
+        
     
     def create_config_rule_policy(self, policy_name: str) -> iam.ManagedPolicy:
         """

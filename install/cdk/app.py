@@ -7,13 +7,14 @@ from cdk.iam_stack import IAMStack
 from cdk.ddb_stack import DDBStack
 from cdk.lambda_stack import LambdaStack
 from cdk.events_stack import EventsStack
-from cdk.sns_stack import SNSStack
+from cdk.ses_stack import SESStack
 from cdk.config_stack import ConfigStack
 from cdk.app_utils import AppUtils
 
 region = os.getenv('AWS_DEFAULT_REGION')
 account = os.getenv('AWS_DEFAULT_ACCOUNT')
-subscriber_email = os.getenv('AWS_SUBSCRIBER_EMAIL')
+recipient_email = os.getenv('AWS_RECIPIENT_EMAIL')
+sender_email = os.getenv('AWS_SENDER_EMAIL')
 
 if region is None:
     print('Missing environment variable AWS_DEFAULT_REGION')
@@ -23,11 +24,6 @@ if account is None:
     print('Missing environment variable AWS_DEFAULT_ACCOUNT')
     sys.exit(1)
     
-if subscriber_email is None:
-    print('Missing environment variable AWS_SUBSCRIBER_EMAIL')
-    sys.exit(1)
-
-
 cwd = os.getcwd()
 install_config_file = open(cwd + '/../config.json')
 install_config = json.load(install_config_file)
@@ -35,6 +31,15 @@ iam_policy_file = open(cwd + '/../lambdas/iam_policy.json')
 iam_policy_document = iam_policy_file.read().replace('REGION_NAME', region).replace('ACCOUNT_ID', account)
 app_utils = AppUtils(install_config)
 app_tags = install_config['tags']
+
+# If the sender email is set as an environment variable, override the config sections
+if sender_email is not None:
+    install_config['ses']['senderEmail'] = sender_email
+    install_config['lambda']['functions']['run']['environment']['senderEmail'] = sender_email
+
+# If the recipient email is set as an environment variable, override the config section
+if recipient_email is not None:
+    install_config['lambda']['functions']['run']['environment']['recipientEmail'] = recipient_email
 
 
 app = cdk.App()
@@ -75,9 +80,9 @@ config_stack = ConfigStack(app, "ConfigStack",
 config_role = iam_stack.create_config_role(install_config['iam']['configRoleName'])
 config_stack.create_required_tags_rule(config_role, install_config['configRules'])
 
-sns_stack = SNSStack(app, "SNSSTack",
-    env=cdk.Environment(account=account, region=region),
-    config=install_config)
-sns_stack.create_checks_sns_topic(subscriber_email)
+ses_stack = SESStack(app, "SESSTack",
+    env=cdk.Environment(account=account, region=region)
+)
+ses_stack.create_ses_email_identity(sender_email)
 
 app.synth()
