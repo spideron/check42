@@ -9,10 +9,14 @@ class Templates:
         templates_location = f'{cwd}/email_templates/'
         main_text_file = open(f'{templates_location}main.txt')
         main_html_file = open(f'{templates_location}main.html')
-        basic_missing_tags_text = open(f'{templates_location}basic_missing_tags.html')
+        basic_missing_tags_text = open(f'{templates_location}basic_missing_tags.txt')
         basic_missing_tags_html = open(f'{templates_location}basic_missing_tags.html')
-        basic_missing_tags_item_text = open(f'{templates_location}basic_missing_tags_item.html')
+        basic_missing_tags_item_text = open(f'{templates_location}basic_missing_tags_item.txt')
         basic_missing_tags_item_html = open(f'{templates_location}basic_missing_tags_item.html')
+        basic_missing_mfa_on_root_text = open(f'{templates_location}basic_no_mfa_on_root.txt')
+        basic_missing_mfa_on_root_html = open(f'{templates_location}basic_no_mfa_on_root.html')
+        basic_no_password_policy_text = open(f'{templates_location}basic_no_password_policy.txt')
+        basic_no_password_policy_html = open(f'{templates_location}basic_no_password_policy.html')
         
         
         self.MAIN_TEXT = main_text_file.read()
@@ -21,6 +25,10 @@ class Templates:
         self.BASIC_MISSING_TAGS_HTML = basic_missing_tags_html.read()
         self.BASIC_MISSING_TAGS_ITEM_TEXT = basic_missing_tags_item_text.read()
         self.BASIC_MISSING_TAGS_ITEM_HTML = basic_missing_tags_item_html.read()
+        self.BASIC_MISSING_MFA_ON_ROOT_TEXT = basic_missing_mfa_on_root_text.read()
+        self.BASIC_MISSING_MFA_ON_ROOT_HTML = basic_missing_mfa_on_root_html.read()
+        self.BASIC_NO_PASSWORD_POLICY_TEXT = basic_no_password_policy_text.read()
+        self.BASIC_NO_PASSWORD_POLICY_HTML = basic_no_password_policy_html.read()
         
         
 
@@ -90,32 +98,39 @@ class Mailer:
             raise(e)
     
     
-    def send_message(self) -> Message:
+    def send_message_from_checks(self, processed_checks: list) -> Message:
         """
         Compile an email message from AWS Best practices checks
         """
         
         findings_text = ''
         findings_html = ''
+        required_tags = ''
         
+        # Get the required tags from the checks configuration
         for c in self.checks:
-            match c['check']:
+            match c['name']:
                 case 'MISSING_TAGS':
-                    missing_tags_checks = None
-                    for check in self.checks:
-                        if check["name"] == "MISSING_TAGS":
-                            missing_tags_checks = check
-                            break
-                        
-                    required_tags = ''
-                    if missing_tags_checks is not None:
-                        missing_tags_checks_config = json.loads(missing_tags_checks['config'])
-                        required_tags = ','.join(missing_tags_checks_config['requiredTags'])
-                    
-                    message = self.compile_missing_tags_message(required_tags, c['info'])
+                    missing_tags_config = json.loads(c['config'])
+                    required_tags = ','.join(missing_tags_config['requiredTags'])
+        
+        
+        # Go through the processed checkes
+        for c in processed_checks:
+            if c['pass'] is False:
+                message = None
+                match c['check']:
+                    case 'MISSING_TAGS':
+                        message = self.compile_missing_tags_message(required_tags, c['info'])
+                    case 'NO_MFA_ON_ROOT':
+                        message = self.compile_missing_mfa_on_root_message()
+                    case 'NO_PASSWORD_POLICY':
+                        message = self.compile_no_password_policy_message()
+                
+                if message is not None:
                     findings_text += message.message_text
-                    findings_html ++ message.message_html
-                    
+                    findings_html += message.message_html
+                
         main_text = self.templates.MAIN_TEXT.replace('***FINDINGS***', findings_text)
         main_html = self.templates.MAIN_HTML.replace('***FINDINGS***', findings_html)
         
@@ -155,5 +170,20 @@ class Mailer:
         
         return message
         
-    
         
+    def compile_missing_mfa_on_root_message(self) -> Message:
+        """
+        Compile missing MFA on Root email section
+        """
+        
+        message = Message(self.templates.BASIC_MISSING_MFA_ON_ROOT_HTML, self.templates.BASIC_MISSING_MFA_ON_ROOT_TEXT)
+        return message
+    
+    
+    def compile_no_password_policy_message(self) -> Message:
+        """
+        Compile no password policy email section
+        """
+        
+        message = Message(self.templates.BASIC_NO_PASSWORD_POLICY_HTML, self.templates.BASIC_NO_PASSWORD_POLICY_TEXT)
+        return message

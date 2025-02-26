@@ -13,6 +13,7 @@
         "tables": ["checks", "settings", "log"]
     },
     "iam": {
+        "iamPolicy": "iam_policy",
         "dynamoDBPolicyName": "ddb_policy",
         "eventBridgeRulePolicyName": "event_bridge_rule_policy",
         "lambdaRoleName": "lambda_role",

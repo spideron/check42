@@ -1,4 +1,5 @@
 import boto3
+import botocore
 import json
 
 class Basic:
@@ -32,6 +33,16 @@ class Basic:
                         if len(missing_tags) > 0:
                             result['pass'] = False
                             result['info'] = missing_tags
+                    case 'NO_MFA_ON_ROOT':
+                        has_mfa = self.has_mfa_on_root()
+                        if not has_mfa:
+                            result['pass'] = False
+                            result['info'] = 'No MFA on Root'
+                    case 'NO_PASSWORD_POLICY':
+                        has_password_policy = self.has_password_policy()
+                        if not has_password_policy:
+                            result['pass'] = False
+                            result['info'] = 'No Password Policy'
                             
                 results.append(result)
                         
@@ -92,3 +103,48 @@ class Basic:
             non_compliant_resources.append(resource_info)
         
         return non_compliant_resources
+        
+    
+    def has_mfa_on_root(self) -> bool:
+        """
+        Check if the account has MFA on root
+        
+        Returns (bool): True if the account has MFA on root and False otherwise
+        """
+        
+        try:
+            iam_client = boto3.client('iam')
+            account_summary = iam_client.get_account_summary()
+            root_mfa_enabled = bool(account_summary['SummaryMap'].get('AccountMFAEnabled', 0))
+            
+            return root_mfa_enabled
+        except Exception as e:
+            print(e)
+            raise(e)
+    
+    
+    def has_password_policy(self) -> bool:
+        """
+        Check if the account has password policy
+        
+        Returns (bool): True if the account has password policy and False otherwise
+        """
+        
+        try:
+            iam = boto3.client('iam')
+            response = iam.get_account_password_policy()
+            
+            # If we get here, a password policy exists
+            policy = response['PasswordPolicy']
+            
+            return True
+                
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'NoSuchEntity':
+                return False
+            else:
+                print(error)
+                raise(error)
+        except Exception as e:
+            print(e)
+            raise(e)

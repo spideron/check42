@@ -20,12 +20,16 @@ class IAMStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         app_utils = AppUtils(config)
+        iam_policy_name = app_utils.get_name_with_prefix(config['iam']['iamPolicy'])
         ddb_policy_name = app_utils.get_name_with_prefix(config['iam']['dynamoDBPolicyName'])
         rule_policy_name = app_utils.get_name_with_prefix(config['iam']['eventBridgeRulePolicyName'])
         ses_policy_name = app_utils.get_name_with_prefix(config['iam']['sesPolicyName'])
         ses_sender_email = config['ses']['senderEmail']
         config_rule_policy_name = app_utils.get_name_with_prefix(config['iam']['configRulePolicyName'])
         config_rule_name = config['configRules']['ruleName']
+        
+        # Create IAM policy to access the IAM service
+        iam_policy = self.create_iam_permissions_policy(iam_policy_name)
         
         dynamodb_tables = []
         for t in config['dynamodb']['tables']:
@@ -53,12 +57,45 @@ class IAMStack(Stack):
             ]
         )
         
+        self.lambda_role.add_managed_policy(iam_policy)
         self.lambda_role.add_managed_policy(ddb_iam_policy)
         self.lambda_role.add_managed_policy(event_iam_policy)
         self.lambda_role.add_managed_policy(ses_iam_policy)
         self.lambda_role.add_managed_policy(config_rules_policy)
         
+    
+    def create_iam_permissions_policy(self,  policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create IAM policy to grant permission to the IAM service
         
+        Args:
+            policy_name (str): The IAM policy name
+        """
+        
+        # Create IAM policy document
+        iam_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "iam:GetAccountPasswordPolicy",
+                        "iam:GetAccountSummary"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=iam_policy
+        )
+        
+        return policy
+    
+    
     def create_dynamodb_iam_policy(self, policy_name: str, tables: list) -> iam.ManagedPolicy:
         """
         Create a DynamoDB access IAM policy

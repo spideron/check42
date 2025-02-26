@@ -58,7 +58,7 @@ def run_checks() -> None:
     sender = os.environ['senderEmail']
     recipient = os.environ['recipientEmail']
     mailer = Mailer(checks, sender, recipient)
-    mailer.send_message()
+    mailer.send_message_from_checks(results)
         
         
         
