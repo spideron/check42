@@ -10,8 +10,7 @@ cwd = os.getcwd()
 
 install_config_file = open(cwd + '/config.json')
 install_config = json.load(install_config_file)
-checks_config_file = open(cwd + '/checks.json')
-checks_config = json.load(checks_config_file)
+checks_config = install_config['checks']
 
 # Helper method to get a name with prefix from the config
 def get_name_with_prefix(name):
@@ -30,14 +29,12 @@ for m in checks_config['modules']:
         item_uuid = uuid.uuid4()
         item_id = str(item_uuid)
         item_name = c['name']
-        item_template = c['template']
         
         item={
                 "id": {'S': item_id},
                 "name": {'S': item_name},
                 "version": {'S': item_version},
                 "module": {'S': item_module},
-                "template_message": {'S': item_template},
                 "enabled": {'BOOL' : True},
                 "muted": {'BOOL': False}
             }

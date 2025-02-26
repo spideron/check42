@@ -20,15 +20,18 @@
         "snsPolicyName": "sns_policy",
         "sesPolicyName": "ses_policy",
         "configRulePolicyName": "required_tags_policy",
-        "configRoleName": "config_role"
+        "configRoleName": "config_role",
+        "s3PolicyName": "s3_policy",
+        "supportPolicyName": "support_policy",
+        "budgetPolicyName": "budget_policy"
     },
-    "lambda":{
-        "defaults":{
+    "lambda": {
+        "defaults": {
             "memory": 128,
             "timeout": 5
         },
         "includeFolders": ["lib", "modules"],
-        "functions":{
+        "functions": {
             "logItemName": {
                 "functionName": "log_item",
                 "fileLocation": "lambdas/aws_best_practices_log_item.py"
@@ -42,6 +45,7 @@
                 "fileLocation": "lambdas/aws_best_practices_checks.py"
             },
             "run": {
+                "timeout": 30,
                 "functionName": "run",
                 "fileLocation": "lambdas/aws_best_practices_run.py",
                 "environment": {
@@ -57,9 +61,9 @@
         }
     },
     "configRules": {
-      "ruleName": "required_tags_rule",
-      "requiredTags": ["environment", "project"],
-      "resourcesToChecks": [
+        "ruleName": "required_tags_rule",
+        "requiredTags": ["environment", "project"],
+        "resourcesToChecks": [
             "ACM_CERTIFICATE",
             "AUTO_SCALING_GROUP",
             "CLOUDFORMATION_STACK",
@@ -90,10 +94,10 @@
             "REDSHIFT_CLUSTER_SNAPSHOT",
             "REDSHIFT_CLUSTER_SUBNET_GROUP",
             "S3_BUCKET"
-      ]
+        ]
     },
     "api": {
-      
+
     },
     "ses": {
         "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable"
@@ -107,5 +111,35 @@
             "month": "*",
             "year": "*"
         }
+    },
+    "checks": {
+        "modules": [{
+            "name": "basic",
+            "version": "1.0",
+            "checks": [{
+                    "name": "NO_MFA_ON_ROOT"
+                },
+                {
+                    "name": "NO_PASSWORD_POLICY"
+                },
+                {
+                    "name": "PUBLIC_BUCKETS"
+                },
+                {
+                    "name": "MISSING_TAGS",
+                    "config": {
+                        "regions": ["us-west-2"],
+                        "configRuleName": "required_tags_rule",
+                        "requiredTags": ["environment", "project"]
+                    }
+                },
+                {
+                    "name": "NO_BUSINESS_SUPPORT"
+                },
+                {
+                    "name": "NO_BUDGET"
+                }
+            ]
+        }]
     }
 }

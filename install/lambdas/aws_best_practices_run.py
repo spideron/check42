@@ -64,5 +64,3 @@ def run_checks() -> None:
         
 def handler(event, context):
     run_checks()
-    
-    #

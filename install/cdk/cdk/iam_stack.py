@@ -27,6 +27,9 @@ class IAMStack(Stack):
         ses_sender_email = config['ses']['senderEmail']
         config_rule_policy_name = app_utils.get_name_with_prefix(config['iam']['configRulePolicyName'])
         config_rule_name = config['configRules']['ruleName']
+        s3_policy_name = app_utils.get_name_with_prefix(config['iam']['s3PolicyName'])
+        support_policy_name = app_utils.get_name_with_prefix(config['iam']['supportPolicyName'])
+        budget_policy_name = app_utils.get_name_with_prefix(config['iam']['budgetPolicyName'])
         
         # Create IAM policy to access the IAM service
         iam_policy = self.create_iam_permissions_policy(iam_policy_name)
@@ -47,6 +50,15 @@ class IAMStack(Stack):
         # Create IAM policy for config rules
         config_rules_policy = self.create_config_rule_policy(config_rule_policy_name)
         
+        # Create IAM policy for s3
+        s3_policy = self.create_s3_policy(s3_policy_name)
+        
+        # Create IAM policy for support
+        support_policy = self.create_support_policy(support_policy_name)
+        
+        # Create IAM policy for budgets
+        budget_policy = self.create_budget_policy(budget_policy_name)
+        
         # Create a role to be used by a Lambda function
         self.lambda_role = iam.Role(
             self,
@@ -62,6 +74,9 @@ class IAMStack(Stack):
         self.lambda_role.add_managed_policy(event_iam_policy)
         self.lambda_role.add_managed_policy(ses_iam_policy)
         self.lambda_role.add_managed_policy(config_rules_policy)
+        self.lambda_role.add_managed_policy(s3_policy)
+        self.lambda_role.add_managed_policy(support_policy)
+        self.lambda_role.add_managed_policy(budget_policy)
         
     
     def create_iam_permissions_policy(self,  policy_name: str) -> iam.ManagedPolicy:
@@ -250,3 +265,111 @@ class IAMStack(Stack):
         )
         
         return config_role
+    
+    def create_s3_policy(self, policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create an S3 IAM Policy
+        
+        Args:
+            policy_name (str): The IAM Policy name
+            
+        Returns (iam.ManagedPolicy): IAM managed policy
+        """
+        
+        # Create IAM policy document
+        s3_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:ListAllMyBuckets"
+                    ],
+                    resources=["*"]
+                ),
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "s3:GetBucketAcl",
+                        "s3:GetBucketPolicy",
+                        "s3:GetBucketPolicyStatus",
+                        "s3:GetBucketPublicAccessBlock",
+                        "s3:GetBucketLocation"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=s3_policy
+        )
+        
+        return policy
+    
+    def create_support_policy(self, policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create a Support Access policy
+        
+        Args:
+            policy_name (str): The IAM Policy name
+            
+        Returns (iam.ManagedPolicy): IAM managed policy
+        """
+        
+        # Create IAM policy document
+        support_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "support:DescribeSeverityLevels"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=support_policy
+        )
+        
+        return policy
+    
+    def create_budget_policy(self, policy_name: str) -> iam.ManagedPolicy:
+        """
+        Create a budget policy
+        
+        Args:
+            policy_name (str): The IAM Policy name
+            
+        Returns (iam.ManagedPolicy): IAM managed policy
+        """
+        
+        # Create IAM policy document
+        budget_policy = iam.PolicyDocument(
+            statements=[
+                iam.PolicyStatement(
+                    effect=iam.Effect.ALLOW,
+                    actions=[
+                        "budgets:DescribeBudgets",
+                        "budgets:ViewBudget"
+                    ],
+                    resources=["*"]
+                )
+            ]
+        )
+        
+        # Create IAM policy
+        policy = iam.ManagedPolicy(
+            self,
+            policy_name,
+            document=budget_policy
+        )
+        
+        return policy

@@ -17,6 +17,14 @@ class Templates:
         basic_missing_mfa_on_root_html = open(f'{templates_location}basic_no_mfa_on_root.html')
         basic_no_password_policy_text = open(f'{templates_location}basic_no_password_policy.txt')
         basic_no_password_policy_html = open(f'{templates_location}basic_no_password_policy.html')
+        basic_s3_public_access_text = open(f'{templates_location}basic_s3_public_access.txt')
+        basic_s3_public_access_html = open(f'{templates_location}basic_s3_public_access.html')
+        basic_s3_public_access_item_text = open(f'{templates_location}basic_s3_public_access_item.txt')
+        basic_s3_public_access_item_html = open(f'{templates_location}basic_s3_public_access_item.html')
+        basic_no_premium_support_text = open(f'{templates_location}basic_no_premium_support.txt')
+        basic_no_premium_support_html = open(f'{templates_location}basic_no_premium_support.html')
+        basic_no_budget_text = open(f'{templates_location}basic_no_budget.txt')
+        basic_no_budget_html = open(f'{templates_location}basic_no_budget.html')
         
         
         self.MAIN_TEXT = main_text_file.read()
@@ -29,8 +37,14 @@ class Templates:
         self.BASIC_MISSING_MFA_ON_ROOT_HTML = basic_missing_mfa_on_root_html.read()
         self.BASIC_NO_PASSWORD_POLICY_TEXT = basic_no_password_policy_text.read()
         self.BASIC_NO_PASSWORD_POLICY_HTML = basic_no_password_policy_html.read()
-        
-        
+        self.BASIC_S3_PUBLIC_ACCESS_TEXT = basic_s3_public_access_text.read()
+        self.BASIC_S3_PUBLIC_ACCESS_HTML = basic_s3_public_access_html.read()
+        self.BASIC_S3_PUBLIC_ACCESS_ITEM_TEXT = basic_s3_public_access_item_text.read()
+        self.BASIC_S3_PUBLIC_ACCESS_ITEM_HTML = basic_s3_public_access_item_html.read()
+        self.BASIC_NO_PREMIUM_SUPPORT_TEXT = basic_no_premium_support_text.read()
+        self.BASIC_NO_PREMIUM_SUPPORT_HTML = basic_no_premium_support_html.read()
+        self.BASIC_NO_BUDGET_TEXT = basic_no_budget_text.read()
+        self.BASIC_NO_BUDGET_HTML = basic_no_budget_html.read()
 
 class Message:
      def __init__(self, message_html: str, message_text:str, subject = '') -> None:
@@ -101,6 +115,11 @@ class Mailer:
     def send_message_from_checks(self, processed_checks: list) -> Message:
         """
         Compile an email message from AWS Best practices checks
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+            
+        Returns (Message): A Message object containig the email text and html sections
         """
         
         findings_text = ''
@@ -126,6 +145,12 @@ class Mailer:
                         message = self.compile_missing_mfa_on_root_message()
                     case 'NO_PASSWORD_POLICY':
                         message = self.compile_no_password_policy_message()
+                    case 'PUBLIC_BUCKETS':
+                        message = self.compile_s3_public_buckets_access(c['info'])
+                    case 'NO_BUSINESS_SUPPORT':
+                        message = self.compile_no_premium_support_message()
+                    case 'NO_BUDGET':
+                        message = self.compile_no_budget_message()
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -145,6 +170,8 @@ class Mailer:
         Args:
             required_tags (list): A string representing a list of required tags
             missing_tags_resource (str): A list of missing tags resources recorded by AWS Config
+        
+        Returns (Message): A Message object containig the email text and html sections
         """
         
         item_text = ''
@@ -174,6 +201,8 @@ class Mailer:
     def compile_missing_mfa_on_root_message(self) -> Message:
         """
         Compile missing MFA on Root email section
+        
+        Returns (Message): A Message object containig the email text and html sections
         """
         
         message = Message(self.templates.BASIC_MISSING_MFA_ON_ROOT_HTML, self.templates.BASIC_MISSING_MFA_ON_ROOT_TEXT)
@@ -183,7 +212,59 @@ class Mailer:
     def compile_no_password_policy_message(self) -> Message:
         """
         Compile no password policy email section
+        
+        Returns (Message): A Message object containig the email text and html sections
         """
         
         message = Message(self.templates.BASIC_NO_PASSWORD_POLICY_HTML, self.templates.BASIC_NO_PASSWORD_POLICY_TEXT)
+        return message
+    
+    
+    def compile_s3_public_buckets_access(self, processed_checks: list) -> Message:
+        """
+        Compile S3 public buckets access email section
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        bucket_list_text = ''
+        bucket_list_html = ''
+        
+        for bucket_info in processed_checks:
+            bucket_name = bucket_info['bucket_name']
+            reasons = bucket_info['reasons']
+            bucket_list_text += self.templates.BASIC_S3_PUBLIC_ACCESS_ITEM_TEXT.replace(
+                '***BUCKET_NAME***', bucket_name).replace('***REASON***', '\n'.join(reasons))
+                
+            bucket_list_html += self.templates.BASIC_S3_PUBLIC_ACCESS_ITEM_HTML.replace(
+                '***BUCKET_NAME***', bucket_name).replace('***REASON***', '<br/>'.join(reasons))
+        
+        findings_text = self.templates.BASIC_S3_PUBLIC_ACCESS_TEXT.replace('***S3_BUCKETS_LIST***', bucket_list_text)
+        findings_html = self.templates.BASIC_S3_PUBLIC_ACCESS_HTML.replace('***S3_BUCKETS_LIST***', bucket_list_html)
+        
+        message = Message(findings_html, findings_text)
+        return message
+    
+    
+    def compile_no_premium_support_message(self) -> Message:
+        """
+        Compile no premium support email section
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        
+        message = Message(self.templates.BASIC_NO_PREMIUM_SUPPORT_HTML, self.templates.BASIC_NO_PREMIUM_SUPPORT_TEXT)
+        return message
+    
+    
+    def compile_no_budget_message(self) -> Message:
+        """
+        Compile no budget email section
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        
+        message = Message(self.templates.BASIC_NO_BUDGET_HTML, self.templates.BASIC_NO_BUDGET_TEXT)
         return message
