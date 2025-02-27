@@ -3,8 +3,8 @@
 # Add the region, account ID, sender, and recipient emails
 export AWS_DEFAULT_REGION=''
 export AWS_DEFAULT_ACCOUNT=''
-export AWS_SENDER_EMAIL="itzhapaz@amazon.com"
-export AWS_RECIPIENT_EMAIL="itzhapaz@amazon.com"
+export AWS_SENDER_EMAIL=''
+export AWS_RECIPIENT_EMAIL=''
 
 # Change to the cdk directory
 cd cdk

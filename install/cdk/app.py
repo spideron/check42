@@ -27,8 +27,6 @@ if account is None:
 cwd = os.getcwd()
 install_config_file = open(cwd + '/../config.json')
 install_config = json.load(install_config_file)
-iam_policy_file = open(cwd + '/../lambdas/iam_policy.json')
-iam_policy_document = iam_policy_file.read().replace('REGION_NAME', region).replace('ACCOUNT_ID', account)
 app_utils = AppUtils(install_config)
 app_tags = install_config['tags']
 
