@@ -1,50 +1,75 @@
 import os
 import boto3
 import json
+from .check_type import CheckType 
 from botocore.exceptions import ClientError
 
+    
+class Template:
+    def __init__(self, txt = None, html = None, item_txt = None, item_html = None) -> None:
+        self.txt = txt
+        self.html = html
+        self.item_txt = item_txt
+        self.item_html = item_html
+
 class Templates:
-    def __init__(self) -> None:
+    def __init__(self, checks: list) -> None:
+        """
+        Templates class constructor
+        
+        Args:
+            checks (list): A list of checks settings
+        """
+        self.email_templates = {}
         cwd = os.getcwd()
         templates_location = f'{cwd}/email_templates/'
         main_text_file = open(f'{templates_location}main.txt')
         main_html_file = open(f'{templates_location}main.html')
-        basic_missing_tags_text = open(f'{templates_location}basic_missing_tags.txt')
-        basic_missing_tags_html = open(f'{templates_location}basic_missing_tags.html')
-        basic_missing_tags_item_text = open(f'{templates_location}basic_missing_tags_item.txt')
-        basic_missing_tags_item_html = open(f'{templates_location}basic_missing_tags_item.html')
-        basic_missing_mfa_on_root_text = open(f'{templates_location}basic_no_mfa_on_root.txt')
-        basic_missing_mfa_on_root_html = open(f'{templates_location}basic_no_mfa_on_root.html')
-        basic_no_password_policy_text = open(f'{templates_location}basic_no_password_policy.txt')
-        basic_no_password_policy_html = open(f'{templates_location}basic_no_password_policy.html')
-        basic_s3_public_access_text = open(f'{templates_location}basic_s3_public_access.txt')
-        basic_s3_public_access_html = open(f'{templates_location}basic_s3_public_access.html')
-        basic_s3_public_access_item_text = open(f'{templates_location}basic_s3_public_access_item.txt')
-        basic_s3_public_access_item_html = open(f'{templates_location}basic_s3_public_access_item.html')
-        basic_no_premium_support_text = open(f'{templates_location}basic_no_premium_support.txt')
-        basic_no_premium_support_html = open(f'{templates_location}basic_no_premium_support.html')
-        basic_no_budget_text = open(f'{templates_location}basic_no_budget.txt')
-        basic_no_budget_html = open(f'{templates_location}basic_no_budget.html')
+        template = Template(txt=main_text_file.read(), html=main_html_file.read())
         
+        self.email_templates['main'] = template
         
-        self.MAIN_TEXT = main_text_file.read()
-        self.MAIN_HTML = main_html_file.read()
-        self.BASIC_MISSING_TAGS_TEXT = basic_missing_tags_text.read()
-        self.BASIC_MISSING_TAGS_HTML = basic_missing_tags_html.read()
-        self.BASIC_MISSING_TAGS_ITEM_TEXT = basic_missing_tags_item_text.read()
-        self.BASIC_MISSING_TAGS_ITEM_HTML = basic_missing_tags_item_html.read()
-        self.BASIC_MISSING_MFA_ON_ROOT_TEXT = basic_missing_mfa_on_root_text.read()
-        self.BASIC_MISSING_MFA_ON_ROOT_HTML = basic_missing_mfa_on_root_html.read()
-        self.BASIC_NO_PASSWORD_POLICY_TEXT = basic_no_password_policy_text.read()
-        self.BASIC_NO_PASSWORD_POLICY_HTML = basic_no_password_policy_html.read()
-        self.BASIC_S3_PUBLIC_ACCESS_TEXT = basic_s3_public_access_text.read()
-        self.BASIC_S3_PUBLIC_ACCESS_HTML = basic_s3_public_access_html.read()
-        self.BASIC_S3_PUBLIC_ACCESS_ITEM_TEXT = basic_s3_public_access_item_text.read()
-        self.BASIC_S3_PUBLIC_ACCESS_ITEM_HTML = basic_s3_public_access_item_html.read()
-        self.BASIC_NO_PREMIUM_SUPPORT_TEXT = basic_no_premium_support_text.read()
-        self.BASIC_NO_PREMIUM_SUPPORT_HTML = basic_no_premium_support_html.read()
-        self.BASIC_NO_BUDGET_TEXT = basic_no_budget_text.read()
-        self.BASIC_NO_BUDGET_HTML = basic_no_budget_html.read()
+        for check in checks:
+            if 'email_templates' in check:
+                email_template = json.loads(check['email_templates'])
+                template = Template()
+                if 'baseFileName' in email_template:
+                    file_txt_path = f'{templates_location}{email_template["baseFileName"]}.txt'
+                    file_html_path = f'{templates_location}{email_template["baseFileName"]}.html'
+                    
+                    if os.path.exists(file_txt_path):
+                        template.txt = open(file_txt_path).read()
+                    
+                    if os.path.exists(file_html_path):
+                        template.html = open(file_html_path).read()
+                
+                if 'itemFileName' in email_template:
+                    file_txt_path = f'{templates_location}{email_template["itemFileName"]}.txt'
+                    file_html_path = f'{templates_location}{email_template["itemFileName"]}.html'
+                    
+                    if os.path.exists(file_txt_path):
+                        template.item_txt = open(file_txt_path).read()
+                    
+                    if os.path.exists(file_html_path):
+                        template.item_html = open(file_html_path).read()
+                
+                self.email_templates[check['name']] = template
+    
+        
+    def get_template(self, check_type: str) -> Template:
+        """
+        Get an email template by the provided check type
+        
+        Args:
+            check_type (str): The Check Type
+        """
+        
+        template = Template()
+        if check_type in self.email_templates:
+            template = self.email_templates[check_type]
+            
+        return template
+        
 
 class Message:
      def __init__(self, message_html: str, message_text:str, subject = '') -> None:
@@ -67,7 +92,7 @@ class Mailer:
         self.sender = sender
         self.recipient = recipient
         self.ses_client = boto3.client('ses')
-        self.templates = Templates()
+        self.email_templates = Templates(checks)
 
     
     def send(self, message: Message) -> None:
@@ -129,9 +154,9 @@ class Mailer:
         # Get the required tags from the checks configuration
         for c in self.checks:
             match c['name']:
-                case 'MISSING_TAGS':
+                case CheckType.MISSING_TAGS.value:
                     missing_tags_config = json.loads(c['config'])
-                    required_tags = ','.join(missing_tags_config['requiredTags'])
+                    required_tags = ' | '.join(missing_tags_config['requiredTags'])
         
         
         # Go through the processed checkes
@@ -139,29 +164,56 @@ class Mailer:
             if c['pass'] is False:
                 message = None
                 match c['check']:
-                    case 'MISSING_TAGS':
+                    case CheckType.MISSING_TAGS.value:
                         message = self.compile_missing_tags_message(required_tags, c['info'])
-                    case 'NO_MFA_ON_ROOT':
-                        message = self.compile_missing_mfa_on_root_message()
-                    case 'NO_PASSWORD_POLICY':
-                        message = self.compile_no_password_policy_message()
-                    case 'PUBLIC_BUCKETS':
+                    case CheckType.NO_MFA_ON_ROOT.value:
+                        message = self.compile_simple_message(CheckType.NO_MFA_ON_ROOT.value)
+                    case CheckType.NO_PASSWORD_POLICY.value:
+                        message = self.compile_simple_message(CheckType.NO_PASSWORD_POLICY.value)
+                    case CheckType.PUBLIC_BUCKETS.value:
                         message = self.compile_s3_public_buckets_access(c['info'])
-                    case 'NO_BUSINESS_SUPPORT':
-                        message = self.compile_no_premium_support_message()
-                    case 'NO_BUDGET':
-                        message = self.compile_no_budget_message()
+                    case CheckType.NO_BUSINESS_SUPPORT.value:
+                        message = self.compile_simple_message(CheckType.NO_BUSINESS_SUPPORT.value)
+                    case CheckType.NO_BUDGET.value:
+                        message = self.compile_simple_message(CheckType.NO_BUDGET.value)
                 
                 if message is not None:
                     findings_text += message.message_text
                     findings_html += message.message_html
-                
-        main_text = self.templates.MAIN_TEXT.replace('***FINDINGS***', findings_text)
-        main_html = self.templates.MAIN_HTML.replace('***FINDINGS***', findings_html)
+         
+        main_template = self.email_templates.get_template('main')
+        main_text = ''
+        main_html = ''
+        
+        if main_template.txt is not None:
+            main_text = main_template.txt.replace('***FINDINGS***', findings_text)
+        if main_template.html is not None:
+            main_html = main_template.html.replace('***FINDINGS***', findings_html)
         
         message = Message(main_html, main_text, subject='AWS Best Practices Checks') #TODO: Move subject to configuration
         self.send(message)
     
+    
+    def compile_simple_message(self, check_type: str) -> Message:
+        """
+        Compile a simple messgae where there's no specific string replacement needed
+        
+        Args:
+            check_type (str): The check type
+        """
+        
+        template = self.email_templates.get_template(check_type)
+        html = ''
+        txt = ''
+        
+        if template.html is not None:
+            html = template.html
+        if template.txt is not None:
+            txt = template.txt
+            
+        message = Message(html, txt)
+        return message
+        
     
     def compile_missing_tags_message(self, required_tags: str, missing_tags_resource: list) -> Message:
         """
@@ -176,49 +228,37 @@ class Mailer:
         
         item_text = ''
         item_html = ''
+        missing_tags_text = ''
+        missing_tags_html = ''
+        template = self.email_templates.get_template(CheckType.MISSING_TAGS.value)
+        
         for t in missing_tags_resource:
-            template_text = self.templates.BASIC_MISSING_TAGS_ITEM_TEXT.replace(
-                '***RESOURCE_TYPE***', t['ResourceType']).replace('***RESOURCE_ID***', t['ResourceId'])
-                
-            template_html = self.templates.BASIC_MISSING_TAGS_ITEM_HTML.replace(
+            template_text = ''
+            template_html = ''
+            
+            if template.item_txt is not None:
+                template_text = template.item_txt.replace(
+                    '***RESOURCE_TYPE***', t['ResourceType']).replace('***RESOURCE_ID***', t['ResourceId'])
+            
+            if template.item_html is not None:
+                template_html = template.item_html.replace(
                 '***RESOURCE_TYPE***', t['ResourceType']).replace('***RESOURCE_ID***', t['ResourceId']).replace(
                     '***RESOURCE_URL***', '') # TODO: compile link to the resource
             
             item_text += template_text
             item_html += template_html
         
-        missing_tags_text = self.templates.BASIC_MISSING_TAGS_TEXT.replace(
-            '***MISSING_TAGS_LIST***', item_text).replace('***TAGS***', required_tags)
-            
-        missing_tags_html = self.templates.BASIC_MISSING_TAGS_HTML.replace(
-            '***MISSING_TAGS_LIST***', item_html).replace('***TAGS***', required_tags)
+        if template.txt is not None:
+            missing_tags_text = template.txt.replace(
+                '***MISSING_TAGS_LIST***', item_text).replace('***TAGS***', required_tags)
+          
+        if template.html is not None: 
+            missing_tags_html = template.html.replace(
+                '***MISSING_TAGS_LIST***', item_html).replace('***TAGS***', required_tags)
         
         message = Message(missing_tags_html, missing_tags_text)
-        
         return message
         
-        
-    def compile_missing_mfa_on_root_message(self) -> Message:
-        """
-        Compile missing MFA on Root email section
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        
-        message = Message(self.templates.BASIC_MISSING_MFA_ON_ROOT_HTML, self.templates.BASIC_MISSING_MFA_ON_ROOT_TEXT)
-        return message
-    
-    
-    def compile_no_password_policy_message(self) -> Message:
-        """
-        Compile no password policy email section
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        
-        message = Message(self.templates.BASIC_NO_PASSWORD_POLICY_HTML, self.templates.BASIC_NO_PASSWORD_POLICY_TEXT)
-        return message
-    
     
     def compile_s3_public_buckets_access(self, processed_checks: list) -> Message:
         """
@@ -231,40 +271,26 @@ class Mailer:
         """
         bucket_list_text = ''
         bucket_list_html = ''
+        findings_text = ''
+        findings_html = ''
+        template = self.email_templates.get_template(CheckType.PUBLIC_BUCKETS.value)
         
         for bucket_info in processed_checks:
             bucket_name = bucket_info['bucket_name']
             reasons = bucket_info['reasons']
-            bucket_list_text += self.templates.BASIC_S3_PUBLIC_ACCESS_ITEM_TEXT.replace(
-                '***BUCKET_NAME***', bucket_name).replace('***REASON***', '\n'.join(reasons))
-                
-            bucket_list_html += self.templates.BASIC_S3_PUBLIC_ACCESS_ITEM_HTML.replace(
-                '***BUCKET_NAME***', bucket_name).replace('***REASON***', '<br/>'.join(reasons))
+            
+            if template.item_txt is not None:
+                bucket_list_text += template.item_txt.replace(
+                    '***BUCKET_NAME***', bucket_name).replace('***REASON***', '\n'.join(reasons))
+            
+            if template.item_html is not None:    
+                bucket_list_html += template.item_html.replace(
+                    '***BUCKET_NAME***', bucket_name).replace('***REASON***', '<br/>'.join(reasons))
         
-        findings_text = self.templates.BASIC_S3_PUBLIC_ACCESS_TEXT.replace('***S3_BUCKETS_LIST***', bucket_list_text)
-        findings_html = self.templates.BASIC_S3_PUBLIC_ACCESS_HTML.replace('***S3_BUCKETS_LIST***', bucket_list_html)
+        if template.txt is not None:
+            findings_text = template.txt.replace('***S3_BUCKETS_LIST***', bucket_list_text)
+        if template.html is not None:
+            findings_html = template.html.replace('***S3_BUCKETS_LIST***', bucket_list_html)
         
         message = Message(findings_html, findings_text)
-        return message
-    
-    
-    def compile_no_premium_support_message(self) -> Message:
-        """
-        Compile no premium support email section
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        
-        message = Message(self.templates.BASIC_NO_PREMIUM_SUPPORT_HTML, self.templates.BASIC_NO_PREMIUM_SUPPORT_TEXT)
-        return message
-    
-    
-    def compile_no_budget_message(self) -> Message:
-        """
-        Compile no budget email section
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        
-        message = Message(self.templates.BASIC_NO_BUDGET_HTML, self.templates.BASIC_NO_BUDGET_TEXT)
         return message

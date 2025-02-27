@@ -50,11 +50,6 @@ def run_checks() -> None:
             basic_checks_results = basic_checker.run_checks()
             results.extend(basic_checks_results)
     
-    message = "All checks passed! Nothing to do"
-    
-    if len(results) > 0:
-        message = results
-    
     sender = os.environ['senderEmail']
     recipient = os.environ['recipientEmail']
     mailer = Mailer(checks, sender, recipient)

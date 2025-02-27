@@ -42,6 +42,9 @@ for m in checks_config['modules']:
         if 'config' in c:
             item['config'] = {'S': json.dumps(c['config'])}
         
+        if 'emailTemplates' in c:
+            item['email_templates'] = {'S': json.dumps(c['emailTemplates'])}
+        
         ddb_checks_table.put_item(item)
 
 # Populate the settings table
