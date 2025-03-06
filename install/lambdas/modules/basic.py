@@ -1,7 +1,12 @@
+import sys
+import os
 import boto3
 import botocore
 import json
 from botocore.exceptions import ClientError
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.check_type import CheckType
 
 class Basic:
     def __init__(self, checks: list) -> None:
@@ -29,36 +34,41 @@ class Basic:
                 }
                 
                 match c['name']:
-                    case 'MISSING_TAGS':
+                    case CheckType.MISSING_TAGS.value:
                         missing_tags = self.check_tags(c)
                         if len(missing_tags) > 0:
                             result['pass'] = False
                             result['info'] = missing_tags
-                    case 'NO_MFA_ON_ROOT':
+                    case CheckType.NO_MFA_ON_ROOT.value:
                         has_mfa = self.has_mfa_on_root()
                         if not has_mfa:
                             result['pass'] = False
                             result['info'] = 'No MFA on Root'
-                    case 'NO_PASSWORD_POLICY':
+                    case CheckType.NO_PASSWORD_POLICY.value:
                         has_password_policy = self.has_password_policy()
                         if not has_password_policy:
                             result['pass'] = False
                             result['info'] = 'No Password Policy'
-                    case 'PUBLIC_BUCKETS':
+                    case CheckType.PUBLIC_BUCKETS.value:
                         public_buckets = self.check_s3_public_buckets()
                         if len(public_buckets) > 0:
                             result['pass'] = False
                             result['info'] = public_buckets
-                    case 'NO_BUSINESS_SUPPORT':
+                    case CheckType.NO_BUSINESS_SUPPORT.value:
                         has_premium_supprt = self.has_premuim_support()
                         if not has_premium_supprt:
                             result['pass'] = False
                             result['info'] = 'No premium support found'
-                    case 'NO_BUDGET':
+                    case CheckType.NO_BUDGET.value:
                         has_budget = self.has_budget()
                         if not has_budget:
                             result['pass'] = False
                             result['info'] = 'No budget found'
+                    case CheckType.UNUSED_EIP.value:
+                        unused_eips = self.check_unused_eip()
+                        if len(unused_eips) > 0:
+                            result['pass'] = False
+                            result['info'] = unused_eips
                             
                 results.append(result)
                         
@@ -304,3 +314,36 @@ class Basic:
             raise(e)
             
         return has_budgets
+    
+    
+    def check_unused_eip(self) -> list:
+        """
+        Check for unused elastic ips
+        
+        Returns (list): A list of unused elastic ips. Empty list if there are non
+        """
+        unused_eips = []
+        
+        try:
+            ec2_client = boto3.client('ec2')
+            regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+            
+            for region in regions:
+                regional_ec2 = boto3.client('ec2', region_name=region)
+                addresses = regional_ec2.describe_addresses()['Addresses']
+                
+                for address in addresses:
+                    if 'InstanceId' not in address and 'NetworkInterfaceId' not in address:
+                        eip_info = {
+                            'region': region,
+                            'allocationId': address.get('AllocationId', 'N/A'),
+                            'publicIp': address.get('PublicIp', 'N/A'),
+                            'tags': address.get('Tags', [])
+                        }
+                        unused_eips.append(eip_info)
+            
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return unused_eips

@@ -1,0 +1,7 @@
+
+Unused Elastic IPs
+The account has Elastic IP (EIP) addresses not attached to a network interface.
+It's recommended to realese unused EIPs.
+https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-instance-addressing-eips-releasing.html
+
+***UNUSED_EIPS***

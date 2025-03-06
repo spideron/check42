@@ -30,6 +30,10 @@ install_config = json.load(install_config_file)
 app_utils = AppUtils(install_config)
 app_tags = install_config['tags']
 
+install_config['region'] = region
+install_config['account'] = account
+
+
 # If the sender email is set as an environment variable, override the config sections
 if sender_email is not None:
     install_config['ses']['senderEmail'] = sender_email
@@ -58,8 +62,7 @@ iam_stack = IAMStack(app, "IAMStack",
 
 lambda_stack = LambdaStack(app, "LambdaStack",
     env=cdk.Environment(account=account, region=region),
-    config=install_config,
-    lambda_role=iam_stack.lambda_role
+    config=install_config
 )
 
 events_stack = EventsStack(app, "EventsStack",

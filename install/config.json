@@ -34,25 +34,151 @@
         "functions": {
             "logItemName": {
                 "functionName": "log_item",
-                "fileLocation": "lambdas/aws_best_practices_log_item.py"
+                "fileLocation": "lambdas/aws_best_practices_log_item.py",
+                "iamPolicies": [{
+                    "name": "dynamodb_access",
+                    "actions": [
+                        "dynamodb:GetItem",
+                        "dynamodb:PutItem",
+                        "dynamodb:Query",
+                        "dynamodb:Scan",
+                        "dynamodb:BatchGetItem",
+                        "dynamodb:BatchWriteItem"
+                    ],
+                    "resources": [
+                        "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_log"
+                    ]
+                }]
             },
             "settings": {
                 "functionName": "settings",
-                "fileLocation": "lambdas/aws_best_practices_settings.py"
+                "fileLocation": "lambdas/aws_best_practices_settings.py",
+                "iamPolicies": [{
+                        "name": "dynamodb_access",
+                        "actions": [
+                            "dynamodb:GetItem",
+                            "dynamodb:PutItem",
+                            "dynamodb:UpdateItem",
+                            "dynamodb:DeleteItem",
+                            "dynamodb:Query",
+                            "dynamodb:Scan",
+                            "dynamodb:BatchGetItem",
+                            "dynamodb:BatchWriteItem"
+                        ],
+                        "resources": [
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_settings"
+                        ]
+                    },
+                    {
+                        "name": "event_bridge_access",
+                        "actions": [
+                            "events:DescribeRule",
+                            "events:PutRule"
+                        ],
+                        "resources": ["*"]
+                    }
+                ]
             },
             "checks": {
                 "functionName": "checks",
-                "fileLocation": "lambdas/aws_best_practices_checks.py"
+                "fileLocation": "lambdas/aws_best_practices_checks.py",
+                "iamPolicies": [{
+                    "name": "dynamodb_access",
+                    "actions": [
+                        "dynamodb:GetItem",
+                        "dynamodb:PutItem",
+                        "dynamodb:UpdateItem",
+                        "dynamodb:DeleteItem",
+                        "dynamodb:Query",
+                        "dynamodb:Scan",
+                        "dynamodb:BatchGetItem",
+                        "dynamodb:BatchWriteItem"
+                    ],
+                    "resources": [
+                        "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks"
+                    ]
+                }]
             },
             "run": {
-                "timeout": 30,
+                "timeout": 60,
                 "functionName": "run",
                 "fileLocation": "lambdas/aws_best_practices_run.py",
                 "environment": {
                     "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable",
                     "recipientEmail": "SET RECIPIENT EMAIL ADDRESS HERE OR USE AWS_RECIPIENT_EMAIL environment variable"
                 },
-                "includeFolders": ["email_templates"]
+                "includeFolders": ["email_templates"],
+                "iamPolicies": [{
+                        "name": "dynamodb_access",
+                        "actions": [
+                            "dynamodb:GetItem",
+                            "dynamodb:Query",
+                            "dynamodb:Scan",
+                            "dynamodb:BatchGetItem"
+                        ],
+                        "resources": [
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks"
+                        ]
+                    },
+                    {
+                        "name": "ses_access",
+                        "actions": [
+                            "ses:SendEmail",
+                            "ses:SendRawEmail"
+                        ],
+                        "resources": ["arn:aws:ses:***REGION***:***ACCOUNT_ID***:identity/***SENDER_EMAIL***"]
+                    },
+                    {
+                        "name": "config_access",
+                        "actions": [
+                            "config:GetComplianceDetailsByConfigRule"
+                        ],
+                        "resources": ["*"]
+                    },
+                    {
+                        "name": "s3_access",
+                        "actions": [
+                            "s3:ListAllMyBuckets",
+                            "s3:GetBucketAcl",
+                            "s3:GetBucketPolicy",
+                            "s3:GetBucketPolicyStatus",
+                            "s3:GetBucketPublicAccessBlock",
+                            "s3:GetBucketLocation"
+                        ],
+                        "resources": ["*"]
+                    },
+                    {
+                        "name": "support_access",
+                        "actions": [
+                            "support:DescribeSeverityLevels"
+                        ],
+                        "resources": ["*"]
+                    },
+                    {
+                        "name": "budgets_access",
+                        "actions": [
+                            "budgets:DescribeBudgets",
+                            "budgets:ViewBudget"
+                        ],
+                        "resources": ["*"]
+                    },
+                    {
+                        "name": "ec2_access",
+                        "actions": [
+                            "ec2:DescribeRegions",
+                            "ec2:DescribeAddresses"
+                        ],
+                        "resources": ["*"]
+                    },
+                    {
+                        "name": "iam_access",
+                        "actions": [
+                            "iam:GetAccountPasswordPolicy",
+                            "iam:GetAccountSummary"
+                        ],
+                        "resources": ["*"]
+                    }
+                ]
             },
             "schedule": {
                 "functionName": "schedule",
@@ -118,26 +244,26 @@
             "version": "1.0",
             "checks": [{
                     "name": "NO_MFA_ON_ROOT",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_no_mfa_on_root"
                     }
                 },
                 {
                     "name": "NO_PASSWORD_POLICY",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_no_password_policy"
                     }
                 },
                 {
                     "name": "PUBLIC_BUCKETS",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_s3_public_access",
                         "itemFileName": "basic_s3_public_access_item"
                     }
                 },
                 {
                     "name": "MISSING_TAGS",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_missing_tags",
                         "itemFileName": "basic_missing_tags_item"
                     },
@@ -149,14 +275,21 @@
                 },
                 {
                     "name": "NO_BUSINESS_SUPPORT",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_no_premium_support"
                     }
                 },
                 {
                     "name": "NO_BUDGET",
-                    "emailTemplates":{
+                    "emailTemplates": {
                         "baseFileName": "basic_no_budget"
+                    }
+                },
+                {
+                    "name": "UNUSED_EIP",
+                    "emailTemplates": {
+                        "baseFileName": "basic_unused_eip",
+                        "itemFileName": "basic_unused_eip_item"
                     }
                 }
             ]

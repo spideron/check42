@@ -176,6 +176,8 @@ class Mailer:
                         message = self.compile_simple_message(CheckType.NO_BUSINESS_SUPPORT.value)
                     case CheckType.NO_BUDGET.value:
                         message = self.compile_simple_message(CheckType.NO_BUDGET.value)
+                    case CheckType.UNUSED_EIP.value:
+                        message = self.compile_unused_eips(c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -291,6 +293,47 @@ class Mailer:
             findings_text = template.txt.replace('***S3_BUCKETS_LIST***', bucket_list_text)
         if template.html is not None:
             findings_html = template.html.replace('***S3_BUCKETS_LIST***', bucket_list_html)
+        
+        message = Message(findings_html, findings_text)
+        return message
+        
+    
+    def compile_unused_eips(self, processed_checks: list) -> Message:
+        """
+        Compile unused elastic ips email section
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        
+        eip_list_text = ''
+        eip_list_html = ''
+        findings_text = ''
+        findings_html = ''
+        template = self.email_templates.get_template(CheckType.UNUSED_EIP.value)
+        
+        for eip in processed_checks:
+            region = eip['region']
+            allocation_id = eip['allocationId']
+            public_ip = eip['publicIp']
+            tags = ' | '.join(eip['tags'])
+            
+            if template.item_txt is not None:
+                eip_list_text += template.item_txt.replace(
+                    '***REGION***', region).replace('***IP_ADDRESS***', public_ip).replace(
+                        '***TAGS***', tags)
+            
+            if template.item_html is not None:    
+                eip_list_html += template.item_html.replace(
+                    '***REGION***', region).replace('***IP_ADDRESS***', public_ip).replace(
+                        '***TAGS***', tags)
+        
+        if template.txt is not None:
+            findings_text = template.txt.replace('***UNUSED_EIPS***', eip_list_text)
+        if template.html is not None:
+            findings_html = template.html.replace('***UNUSED_EIPS***', eip_list_html)
         
         message = Message(findings_html, findings_text)
         return message
