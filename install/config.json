@@ -13,17 +13,7 @@
         "tables": ["checks", "settings", "log"]
     },
     "iam": {
-        "iamPolicy": "iam_policy",
-        "dynamoDBPolicyName": "ddb_policy",
-        "eventBridgeRulePolicyName": "event_bridge_rule_policy",
-        "lambdaRoleName": "lambda_role",
-        "snsPolicyName": "sns_policy",
-        "sesPolicyName": "ses_policy",
-        "configRulePolicyName": "required_tags_policy",
-        "configRoleName": "config_role",
-        "s3PolicyName": "s3_policy",
-        "supportPolicyName": "support_policy",
-        "budgetPolicyName": "budget_policy"
+        "configRoleName": "config_role"
     },
     "lambda": {
         "defaults": {
@@ -290,6 +280,9 @@
                     "emailTemplates": {
                         "baseFileName": "basic_unused_eip",
                         "itemFileName": "basic_unused_eip_item"
+                    },
+                    "config": {
+                        "regions": ["*"]
                     }
                 }
             ]

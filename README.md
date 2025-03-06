@@ -83,3 +83,8 @@ the function completes execution.
 - If you're not receiving emails, verify that the sender email was confirmed through the SES verification process
 - Check the Lambda function logs in CloudWatch for any execution errors
 - Ensure your SES account is out of sandbox mode if sending to non-verified recipients
+
+
+## Configuration
+
+Check the [configuration doc](docs/config.md)

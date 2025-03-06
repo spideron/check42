@@ -65,7 +65,7 @@ class Basic:
                             result['pass'] = False
                             result['info'] = 'No budget found'
                     case CheckType.UNUSED_EIP.value:
-                        unused_eips = self.check_unused_eip()
+                        unused_eips = self.check_unused_eip(c)
                         if len(unused_eips) > 0:
                             result['pass'] = False
                             result['info'] = unused_eips
@@ -316,17 +316,25 @@ class Basic:
         return has_budgets
     
     
-    def check_unused_eip(self) -> list:
+    def check_unused_eip(self, check_info: dict) -> list:
         """
         Check for unused elastic ips
+        
+        Args:
+            check_info (dict): A check information
         
         Returns (list): A list of unused elastic ips. Empty list if there are non
         """
         unused_eips = []
+        regions = []
         
         try:
-            ec2_client = boto3.client('ec2')
-            regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+            if 'config' in check_info and 'regions' in check_info['config']:
+                if len(check_info['config']['regions']) == 1 and check_info['config']['regions'][0] == "*":
+                    ec2_client = boto3.client('ec2')
+                    regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+                else:
+                    regions = check_info['config']['regions']
             
             for region in regions:
                 regional_ec2 = boto3.client('ec2', region_name=region)
