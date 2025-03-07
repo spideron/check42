@@ -329,12 +329,14 @@ class Basic:
         regions = []
         
         try:
-            if 'config' in check_info and 'regions' in check_info['config']:
-                if len(check_info['config']['regions']) == 1 and check_info['config']['regions'][0] == "*":
-                    ec2_client = boto3.client('ec2')
-                    regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
-                else:
-                    regions = check_info['config']['regions']
+            if 'config' in check_info:
+                check_config = json.loads(check_info['config'])
+                if 'regions' in check_config:
+                    if len(check_config['regions']) == 1 and check_config['regions'][0] == "*":
+                        ec2_client = boto3.client('ec2')
+                        regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+                    else:
+                        regions = check_info['config']['regions']
             
             for region in regions:
                 regional_ec2 = boto3.client('ec2', region_name=region)
