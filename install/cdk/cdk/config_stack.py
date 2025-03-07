@@ -26,6 +26,15 @@ class ConfigStack(Stack):
         input_parameters = {f"tag{i+1}Key": tag for i, tag in enumerate(tags)}
         resource_types = [config.ResourceType.__dict__[name].__get__(None, config.ResourceType) for name in configRule['resourcesToChecks']] 
         
+        recorder = config.CfnConfigurationRecorder(
+            self, "ConfigurationRecorder",
+            role_arn=config_iam_role.role_arn,
+            recording_group={
+                "allSupported": True,
+                "includeGlobalResources": True
+            }
+        )
+        
         scope = config.RuleScope.from_resources(
             resource_types=resource_types
         )   
