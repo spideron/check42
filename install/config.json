@@ -22,24 +22,6 @@
         },
         "includeFolders": ["lib", "modules"],
         "functions": {
-            "logItemName": {
-                "functionName": "log_item",
-                "fileLocation": "lambdas/aws_best_practices_log_item.py",
-                "iamPolicies": [{
-                    "name": "dynamodb_access",
-                    "actions": [
-                        "dynamodb:GetItem",
-                        "dynamodb:PutItem",
-                        "dynamodb:Query",
-                        "dynamodb:Scan",
-                        "dynamodb:BatchGetItem",
-                        "dynamodb:BatchWriteItem"
-                    ],
-                    "resources": [
-                        "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_log"
-                    ]
-                }]
-            },
             "settings": {
                 "functionName": "settings",
                 "fileLocation": "lambdas/aws_best_practices_settings.py",
@@ -102,12 +84,17 @@
                         "name": "dynamodb_access",
                         "actions": [
                             "dynamodb:GetItem",
+                            "dynamodb:PutItem",
+                            "dynamodb:UpdateItem",
+                            "dynamodb:DeleteItem",
                             "dynamodb:Query",
                             "dynamodb:Scan",
-                            "dynamodb:BatchGetItem"
+                            "dynamodb:BatchGetItem",
+                            "dynamodb:BatchWriteItem"
                         ],
                         "resources": [
-                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks"
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks",
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_log"
                         ]
                     },
                     {
