@@ -159,7 +159,7 @@ class Mailer:
                     required_tags = ' | '.join(missing_tags_config['requiredTags'])
         
         
-        # Go through the processed checkes
+        # Go through the processed checks
         for c in processed_checks:
             if c['pass'] is False:
                 message = None
@@ -198,7 +198,7 @@ class Mailer:
     
     def compile_simple_message(self, check_type: str) -> Message:
         """
-        Compile a simple messgae where there's no specific string replacement needed
+        Compile a simple message where there's no specific string replacement needed
         
         Args:
             check_type (str): The check type
@@ -269,7 +269,7 @@ class Mailer:
         Args:
             processed_checks(list): A list of items from the checker
         
-        Returns (Message): A Message object containig the email text and html sections
+        Returns (Message): A Message object containing the email text and html sections
         """
         bucket_list_text = ''
         bucket_list_html = ''

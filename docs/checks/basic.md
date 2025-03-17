@@ -7,10 +7,10 @@ A list of checks in the basic module.
 
 The configuration of the checks can be found in the [config.json](../../install/config.json)  
 Each config section has the following properties:  
-- **name (REQUIRED)**: The key name of the check. orresponds to the [CheckType Enum](../../install/lambdas/lib/check_type.py)
+- **name (REQUIRED)**: The key name of the check. Corresponds to the [CheckType Enum](../../install/lambdas/lib/check_type.py)
 - **emailTemplates**:
     - baseFileName: The file name (without extention) in the [lambdas/email_templates folder](../../install/lambdas/email_templates)
-    - itemFileName: The file name for sub item for the template (if there's one) in the same foleder as the baseFileName
+    - itemFileName: The file name for sub item for the template (if there's one) in the same folder as the baseFileName
 - **config**: An optional configuration section to be used by the checker
 
 
@@ -18,7 +18,7 @@ Each config section has the following properties:
 
 ### MFA on Root Account
 
-**Purpose**: Check if an multi-factor authentication (MFA) is set on the root account. The checker will notify the 
+**Purpose**: Check if multi-factor authentication (MFA) is set on the root account. The checker will notify the 
 subscriber if no MFA was found on the root account. 
 https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-mfa-for-root.html  
 **Implemented in version**: 1.0  
@@ -35,7 +35,7 @@ https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-mfa-for-root.html
 
 ### Password Policy
 
-**Purpose**: Check is the account has a password policy set. The checker will notify the subscriber if no password 
+**Purpose**: Check if the account has a password policy set. The checker will notify the subscriber if no password 
 policy was found on the account. 
 https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_account-policy.html  
 **Implemented in version**: 1.0  
@@ -52,8 +52,8 @@ https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_accoun
 
 ### Public S3 Buckets
 
-**Purpose**: Check if there are any S3 buckets with public access to the internet. If any bucket has public accees, 
-the subscriber will be notify about them and the reason it found to make them public. 
+**Purpose**: Check if there are any S3 buckets with public access to the internet. If any bucket has public access, 
+the subscriber will be notified about them and the reason it found to make them public. 
 https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html  
 **Implemented in version**: 1.0  
 **Config**:
@@ -91,7 +91,7 @@ https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-publi
 
 ### Business Support
 
-**Purpose**: Check if the account has at least business support level subscribption.  
+**Purpose**: Check if the account has at least a business support level subscription.  
 **Implemented in version**: 1.0  
 **Config**:
 ```JavaScript

@@ -31,7 +31,7 @@ def validate_email_or_sns_arn(input_string: str) -> bool:
     """
     Check if the provided input is a valid email address or an AWS SNS arn
     
-    Returns (bool): True if the provided input is either an valid email address or an AWS SNS arn, False otherwise
+    Returns (bool): True if the provided input is either a valid email address or an AWS SNS arn, False otherwise
     """
     
     # Email pattern
@@ -51,7 +51,7 @@ def get_settings() -> dict:
     """
     Get the settings from the DynamoDB settings table
     
-    Returns (dict): A dictionary containing the settings informtion 
+    Returns (dict): A dictionary containing the settings information 
     """
     settings = {
             "id": None,
@@ -83,7 +83,7 @@ def set_settings(settings: dict) -> bool:
     Set the settings record in the DynamoDB settings table
     
     Args:
-        settings (dict): A dictionary containing the settings informtion
+        settings (dict): A dictionary containing the settings information
         
     Returns (bool): True if updated successfully and False otherwise
     """
