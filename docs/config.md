@@ -53,7 +53,7 @@ The AWS Best practices [configuration file](../../install/config.json) can be fo
 
 ```
 
-- **prefix**: A prefix for AWS resources, for example, a DyanmoDB table that holds the checks, can be named 
+- **prefix**: A prefix for AWS resources, for example, a DynamoDB table that holds the checks, can be named 
 "prefix_checks". If the prefix name is `aws_best_practices` and the table name in the configuration is named 
 `checks`, the actual table name will be `aws_best_practices_checks`
 
@@ -279,7 +279,7 @@ The AWS Best practices [configuration file](../../install/config.json) can be fo
 ```
 
 - **ses**: SES configuration section.  
-    - **senderEmail**: The sender email address for the notification emails. Can be set directly here but preferred to be stored in an os environment variable named `AWS_SENDER_EMAIL`.  
+    - **senderEmail**: The sender email address for the notification emails. Can be set directly here but preferred to be stored in an OS environment variable named `AWS_SENDER_EMAIL`.  
 
 ```JavaScript
 "ses": {

@@ -1,4 +1,4 @@
 
 Missing Tags
-The checker looks for the tags ***TAGS*** and find the following resources without these tags
+The checker looks for the tags ***TAGS*** and finds the following resources without these tags
 ***MISSING_TAGS_LIST***

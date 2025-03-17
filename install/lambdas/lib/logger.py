@@ -47,7 +47,7 @@ class Logger:
                 if processed_check['check'] in self.checks_config_dict:
                     check_config = self.checks_config_dict[processed_check['check']]
                     
-                    # Create an empty messgae and only add content to it when there's some
+                    # Create an empty message and only add content to it when there's some
                     message = ''
                     match processed_check['check']:
                         case CheckType.MISSING_TAGS.value:

@@ -1,0 +1,4 @@
+
+No Premium Support
+The account doesn't have premium support enabled (business or above). It's recommended to have at least business support when having production workloads.
+https://aws.amazon.com/premiumsupport/plans/

@@ -275,7 +275,7 @@ class Basic:
         """
         Check is the account has premium support
         
-        Returns (bool): True if the account has premuim support and False otherwise
+        Returns (bool): True if the account has premium support and False otherwise
         """
         support_client = boto3.client('support')
         has_premium_support = True
@@ -323,7 +323,7 @@ class Basic:
         Args:
             check_info (dict): A check information
         
-        Returns (list): A list of unused elastic ips. Empty list if there are non
+        Returns (list): A list of unused elastic ips. Empty list if there are none
         """
         unused_eips = []
         regions = []
