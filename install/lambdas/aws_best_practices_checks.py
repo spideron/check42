@@ -133,6 +133,7 @@ def handler(event, context):
                 status_code = 500
                 errors.append('Could not retrieve check items')
             else:
+                status_code = 200
                 body['message'] = checks
            
         elif event['httpMethod'] == 'PUT':
