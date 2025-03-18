@@ -165,7 +165,7 @@ class Mailer:
                 message = None
                 match c['check']:
                     case CheckType.MISSING_TAGS.value:
-                        message = self.compile_missing_tags_message(required_tags, c['info'][0])
+                        message = self.compile_missing_tags_message(required_tags, c['info'])
                     case CheckType.NO_MFA_ON_ROOT.value:
                         message = self.compile_simple_message(CheckType.NO_MFA_ON_ROOT.value)
                     case CheckType.NO_PASSWORD_POLICY.value:
@@ -234,21 +234,23 @@ class Mailer:
         missing_tags_html = ''
         template = self.email_templates.get_template(CheckType.MISSING_TAGS.value)
         
-        for t in missing_tags_resource:
-            template_text = ''
-            template_html = ''
-            
-            if template.item_txt is not None:
-                template_text = template.item_txt.replace(
-                    '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn'])
-            
-            if template.item_html is not None:
-                template_html = template.item_html.replace(
-                '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn']).replace(
-                    '***RESOURCE_URL***', '') # TODO: compile link to the resource
-            
-            item_text += template_text
-            item_html += template_html
+        for key, value in missing_tags_resource.items():
+            if value:  # Check if the array is not empty
+                for t in value:
+                    template_text = ''
+                    template_html = ''
+                
+                    if template.item_txt is not None:
+                        template_text = template.item_txt.replace(
+                            '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn'])
+                    
+                    if template.item_html is not None:
+                        template_html = template.item_html.replace(
+                        '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn']).replace(
+                            '***RESOURCE_URL***', '')
+                
+                    item_text += template_text
+                    item_html += template_html
         
         if template.txt is not None:
             missing_tags_text = template.txt.replace(

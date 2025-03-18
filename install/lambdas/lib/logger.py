@@ -51,8 +51,10 @@ class Logger:
                     message = ''
                     match processed_check['check']:
                         case CheckType.MISSING_TAGS.value:
-                            for info in processed_check['info'][0]:
-                                message += f"Resource: {info['resource_type']}. Id: {info['resource_arn']}\n\n"
+                            for key, value in processed_check['info'].items():
+                                if value:  # Check if the array is not empty
+                                    for item in value:
+                                        message += f"Resource: {item['resource_type']}. Id: {item['resource_arn']}\n\n"
                         case CheckType.PUBLIC_BUCKETS.value:
                             for info in processed_check['info']:
                                 reasons = '\n'.join(info['reasons'])

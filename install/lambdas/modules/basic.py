@@ -4,11 +4,9 @@ import boto3
 import botocore
 import json
 from botocore.exceptions import ClientError
-from .basic_tags import TagChecker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.check_type import CheckType
-from lib.resource_type import ResourceType
 
 class Basic:
     def __init__(self, checks: list) -> None:
@@ -39,7 +37,28 @@ class Basic:
             region_list = regions
         
         return region_list
+    
+    def has_required_tags(self, tags, required_tags):
+        """
+        Check if all required tags are present in the tags list.
         
+        Args:
+            tags (list): List of tag dictionaries with 'Key' and 'Value'
+            required_tags (list): List of required tag keys
+            
+        Returns:
+            bool: True if all required tags are present, False otherwise
+        """
+        # Convert list of tag dictionaries to a set of lowercase tag keys
+        tag_keys = {tag['Key'].lower() for tag in tags}
+        
+        # Check if all required tags are present
+        for tag in required_tags:
+            if tag.lower() not in tag_keys:
+                return False
+    
+        return True
+    
     
     def run_checks(self) -> list:
         """
@@ -98,25 +117,50 @@ class Basic:
         return results
 
 
-    def check_tags(self, check_info) -> list:
+    def check_tags(self, check_info: dict) -> list:
         """
-        Check if tags are set correctly
+        Check if the rquired tags are set for the services set in the congfig
+        
+        Args:
+            check_info (dict): The check information as stored in the DB
+            
+        Returns (list): A list of resources with missing tags
         """
         
-        missing_tags_resources = []
+        non_compliant_resources = {}
         check_config = json.loads(check_info['config'])
-        regions = regions = self.get_region_list(check_config['regions'])
-        resources = check_config['resources']
+        regions = self.get_region_list(check_config['regions'])
+        required_resources = check_config['resources']
         required_tags = check_config['requiredTags']
-        tag_checker = TagChecker(required_tags)
         
-        for resource_type in resources:
-            match resource_type:
-                case ResourceType.ACM_CERTIFICATE.value:
-                    for region in regions:
-                        missing_tags_resources.append(tag_checker.get_acm_missing_tags(region))
+        try:
+            for region in regions:
+                tagging_client = boto3.client('resourcegroupstaggingapi', region_name=region)
+                
+                paginator = tagging_client.get_paginator('get_resources')
+                for page in paginator.paginate():
+                    for resource in page['ResourceTagMappingList']:
+                        resource_arn = resource['ResourceARN']
+                        tags = resource['Tags']
+                        
+                        # Extract service name from ARN
+                        service_name = resource_arn.split(':')[2]
+                        
+                        if service_name not in non_compliant_resources:
+                            non_compliant_resources[service_name] = []
+                        
+                        # Check if required tags are present
+                        if service_name in required_resources and not self.has_required_tags(tags, required_tags):
+                            non_compliant_resources[service_name].append({
+                                'resource_arn': resource_arn,
+                                'resource_type': service_name
+                            })
+                                
+        except Exception as e:
+            print(e)
+            raise(e)
         
-        return missing_tags_resources
+        return non_compliant_resources
         
     
     def has_mfa_on_root(self) -> bool:
