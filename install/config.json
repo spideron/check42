@@ -106,52 +106,24 @@
                         "resources": ["arn:aws:ses:***REGION***:***ACCOUNT_ID***:identity/***SENDER_EMAIL***"]
                     },
                     {
-                        "name": "config_access",
-                        "actions": [
-                            "config:GetComplianceDetailsByConfigRule"
-                        ],
-                        "resources": ["*"]
-                    },
-                    {
-                        "name": "s3_access",
+                        "name": "general_access",
                         "actions": [
                             "s3:ListAllMyBuckets",
                             "s3:GetBucketAcl",
                             "s3:GetBucketPolicy",
                             "s3:GetBucketPolicyStatus",
                             "s3:GetBucketPublicAccessBlock",
-                            "s3:GetBucketLocation"
-                        ],
-                        "resources": ["*"]
-                    },
-                    {
-                        "name": "support_access",
-                        "actions": [
-                            "support:DescribeSeverityLevels"
-                        ],
-                        "resources": ["*"]
-                    },
-                    {
-                        "name": "budgets_access",
-                        "actions": [
+                            "s3:GetBucketLocation",
+                            "support:DescribeSeverityLevels",
                             "budgets:DescribeBudgets",
-                            "budgets:ViewBudget"
-                        ],
-                        "resources": ["*"]
-                    },
-                    {
-                        "name": "ec2_access",
-                        "actions": [
+                            "budgets:ViewBudget",
                             "ec2:DescribeRegions",
-                            "ec2:DescribeAddresses"
-                        ],
-                        "resources": ["*"]
-                    },
-                    {
-                        "name": "iam_access",
-                        "actions": [
+                            "ec2:DescribeAddresses",
                             "iam:GetAccountPasswordPolicy",
-                            "iam:GetAccountSummary"
+                            "iam:GetAccountSummary",
+                            "acm:ListCertificates",
+                            "acm:DescribeCertificate",
+                            "acm:ListTagsForCertificate"
                         ],
                         "resources": ["*"]
                     }
@@ -162,42 +134,6 @@
                 "fileLocation": "lambdas/aws_best_practices_schedule.py"
             }
         }
-    },
-    "configRules": {
-        "ruleName": "required_tags_rule",
-        "requiredTags": ["environment", "project"],
-        "resourcesToChecks": [
-            "ACM_CERTIFICATE",
-            "AUTO_SCALING_GROUP",
-            "CLOUDFORMATION_STACK",
-            "CODEBUILD_PROJECT",
-            "DYNAMODB_TABLE",
-            "EC2_CUSTOMER_GATEWAY",
-            "EC2_INSTANCE",
-            "EC2_INTERNET_GATEWAY",
-            "EC2_NETWORK_ACL",
-            "EC2_NETWORK_INTERFACE",
-            "EC2_ROUTE_TABLE",
-            "EC2_SECURITY_GROUP",
-            "EC2_SUBNET",
-            "EBS_VOLUME",
-            "EC2_VPC",
-            "EC2_VPN_CONNECTION",
-            "EC2_VPN_GATEWAY",
-            "ELB_LOAD_BALANCER",
-            "ELBV2_LOAD_BALANCER",
-            "RDS_DB_INSTANCE",
-            "RDS_DB_SECURITY_GROUP",
-            "RDS_DB_SNAPSHOT",
-            "RDS_DB_SUBNET_GROUP",
-            "RDS_EVENT_SUBSCRIPTION",
-            "REDSHIFT_CLUSTER",
-            "REDSHIFT_CLUSTER_PARAMETER_GROUP",
-            "REDSHIFT_CLUSTER_SECURITY_GROUP",
-            "REDSHIFT_CLUSTER_SNAPSHOT",
-            "REDSHIFT_CLUSTER_SUBNET_GROUP",
-            "S3_BUCKET"
-        ]
     },
     "api": {
 
@@ -246,8 +182,39 @@
                     },
                     "config": {
                         "regions": ["us-west-2"],
-                        "configRuleName": "required_tags_rule",
-                        "requiredTags": ["environment", "project"]
+                        "requiredTags": ["environment", "project"],
+                        "resources": [
+                            "ACM_CERTIFICATE",
+                            "AUTO_SCALING_GROUP",
+                            "CLOUDFORMATION_STACK",
+                            "CODEBUILD_PROJECT",
+                            "DYNAMODB_TABLE",
+                            "EC2_CUSTOMER_GATEWAY",
+                            "EC2_INSTANCE",
+                            "EC2_INTERNET_GATEWAY",
+                            "EC2_NETWORK_ACL",
+                            "EC2_NETWORK_INTERFACE",
+                            "EC2_ROUTE_TABLE",
+                            "EC2_SECURITY_GROUP",
+                            "EC2_SUBNET",
+                            "EBS_VOLUME",
+                            "EC2_VPC",
+                            "EC2_VPN_CONNECTION",
+                            "EC2_VPN_GATEWAY",
+                            "ELB_LOAD_BALANCER",
+                            "ELBV2_LOAD_BALANCER",
+                            "RDS_DB_INSTANCE",
+                            "RDS_DB_SECURITY_GROUP",
+                            "RDS_DB_SNAPSHOT",
+                            "RDS_DB_SUBNET_GROUP",
+                            "RDS_EVENT_SUBSCRIPTION",
+                            "REDSHIFT_CLUSTER",
+                            "REDSHIFT_CLUSTER_PARAMETER_GROUP",
+                            "REDSHIFT_CLUSTER_SECURITY_GROUP",
+                            "REDSHIFT_CLUSTER_SNAPSHOT",
+                            "REDSHIFT_CLUSTER_SUBNET_GROUP",
+                            "S3_BUCKET"
+                        ]
                     }
                 },
                 {

@@ -4,9 +4,11 @@ import boto3
 import botocore
 import json
 from botocore.exceptions import ClientError
+from .basic_tags import TagChecker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.check_type import CheckType
+from lib.resource_type import ResourceType
 
 class Basic:
     def __init__(self, checks: list) -> None:
@@ -17,6 +19,27 @@ class Basic:
             checks (list): A list of checks to run
         """
         self.checks = checks
+    
+    def get_region_list(self, regions: list) -> list:
+        """
+        Get a list of regions from a config section
+        
+        Args:
+            regions (list): A list of region names or ['*'] for all available regions
+        
+        Returns (list): A list of regions
+        """
+        
+        region_list = []
+        
+        if len(regions) == 1 and regions[0] == "*":
+            ec2_client = boto3.client('ec2')
+            region_list = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+        else:
+            region_list = regions
+        
+        return region_list
+        
     
     def run_checks(self) -> list:
         """
@@ -81,54 +104,19 @@ class Basic:
         """
         
         missing_tags_resources = []
-        check_info_config = json.loads(check_info['config'])
+        check_config = json.loads(check_info['config'])
+        regions = regions = self.get_region_list(check_config['regions'])
+        resources = check_config['resources']
+        required_tags = check_config['requiredTags']
+        tag_checker = TagChecker(required_tags)
         
-        try:
-            config_client = boto3.client('config')
-            rule_name = check_info_config['configRuleName']
-            
-            response = config_client.get_compliance_details_by_config_rule(
-                ConfigRuleName=rule_name,
-                ComplianceTypes=['NON_COMPLIANT'],
-                Limit=100
-            )
-            
-            non_compliant_resources = self.get_non_compliant_resources(response)
-           
-            # Handle pagination if there are more results
-            while 'NextToken' in response:
-                response = config_client.get_compliance_details_by_config_rule(
-                    ConfigRuleName=rule_name,
-                    ComplianceTypes=['NON_COMPLIANT'],
-                    NextToken=response['NextToken'],
-                    Limit=100
-                )
-                
-                non_compliant_resources.extend(self.get_non_compliant_resources(response))
-            
-            missing_tags_resources.extend(non_compliant_resources)
-        except Exception as e:
-            print(e)
-            raise(e)
+        for resource_type in resources:
+            match resource_type:
+                case ResourceType.ACM_CERTIFICATE.value:
+                    for region in regions:
+                        missing_tags_resources.append(tag_checker.get_acm_missing_tags(region))
         
         return missing_tags_resources
-        
-        
-    def get_non_compliant_resources(self, config_response) -> list:
-        # Process the non-compliant resources
-        non_compliant_resources = []
-        
-        for evaluation in config_response['EvaluationResults']:
-            resource_info = {
-                'ResourceId': evaluation['EvaluationResultIdentifier']['EvaluationResultQualifier']['ResourceId'],
-                'ResourceType': evaluation['EvaluationResultIdentifier']['EvaluationResultQualifier']['ResourceType'],
-                'ComplianceType': evaluation['ComplianceType'],
-                'LastResultRecordedTime': evaluation['ResultRecordedTime'].strftime('%Y-%m-%d %H:%M:%S')
-            }
-            
-            non_compliant_resources.append(resource_info)
-        
-        return non_compliant_resources
         
     
     def has_mfa_on_root(self) -> bool:
@@ -332,11 +320,7 @@ class Basic:
             if 'config' in check_info:
                 check_config = json.loads(check_info['config'])
                 if 'regions' in check_config:
-                    if len(check_config['regions']) == 1 and check_config['regions'][0] == "*":
-                        ec2_client = boto3.client('ec2')
-                        regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
-                    else:
-                        regions = check_info['config']['regions']
+                    regions = self.get_region_list(check_config['regions'])
             
             for region in regions:
                 regional_ec2 = boto3.client('ec2', region_name=region)

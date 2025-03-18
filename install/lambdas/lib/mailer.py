@@ -165,7 +165,7 @@ class Mailer:
                 message = None
                 match c['check']:
                     case CheckType.MISSING_TAGS.value:
-                        message = self.compile_missing_tags_message(required_tags, c['info'])
+                        message = self.compile_missing_tags_message(required_tags, c['info'][0])
                     case CheckType.NO_MFA_ON_ROOT.value:
                         message = self.compile_simple_message(CheckType.NO_MFA_ON_ROOT.value)
                     case CheckType.NO_PASSWORD_POLICY.value:
@@ -240,11 +240,11 @@ class Mailer:
             
             if template.item_txt is not None:
                 template_text = template.item_txt.replace(
-                    '***RESOURCE_TYPE***', t['ResourceType']).replace('***RESOURCE_ID***', t['ResourceId'])
+                    '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn'])
             
             if template.item_html is not None:
                 template_html = template.item_html.replace(
-                '***RESOURCE_TYPE***', t['ResourceType']).replace('***RESOURCE_ID***', t['ResourceId']).replace(
+                '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn']).replace(
                     '***RESOURCE_URL***', '') # TODO: compile link to the resource
             
             item_text += template_text
