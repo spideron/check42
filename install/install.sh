@@ -6,9 +6,6 @@ export AWS_DEFAULT_ACCOUNT=''
 export AWS_SENDER_EMAIL=''
 export AWS_RECIPIENT_EMAIL=''
 
-# Bootstrap
-cdk bootstrap aws://${AWS_DEFAULT_ACCOUNT}/${AWS_DEFAULT_REGION}
-
 # Change to the cdk directory
 cd cdk
 
@@ -16,6 +13,9 @@ cd cdk
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 sudo npm install -g aws-cdk@latest
+
+# Bootstrap
+cdk bootstrap aws://${AWS_DEFAULT_ACCOUNT}/${AWS_DEFAULT_REGION}
 
 # Deploy AWS resources using CDK
 cdk deploy --all --require-approval never
