@@ -51,17 +51,12 @@ on a schedule and emails the results to specified recipients.
 
 7. Save the file (in nano: Ctrl+O, then Enter, then Ctrl+X)
 
-8. Boostrap your environment 
-   ```bash
-   cdk bootstrap aws://accountNumber/region 
-   ```
-
-9. Run the installation script:
+8. Run the installation script:
    ```bash
    ./install.sh
    ```
 
-10. **Important**: After running the installation script, you will receive an email from 
+9. **Important**: After running the installation script, you will receive an email from 
 AWS SES to verify the sender email identity. You must click the verification link in this 
 email to complete the installation.
 
