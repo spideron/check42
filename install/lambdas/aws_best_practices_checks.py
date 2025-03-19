@@ -126,7 +126,7 @@ def handler(event, context):
     }
     
     try:
-        if event['httpMethod'] == 'GET':
+        if event.get('httpMethod') == 'GET':
             checks = get_checks()
             
             if checks is None:
@@ -136,7 +136,7 @@ def handler(event, context):
                 status_code = 200
                 body['message'] = checks
            
-        elif event['httpMethod'] == 'PUT':
+        elif event.get('httpMethod') == 'PUT':
             checks = event['body']
             validation_erros = validate_checks(checks)
             if len(validation_erros) > 0:
@@ -163,7 +163,8 @@ def handler(event, context):
     return {
         "statusCode": status_code,
         "headers": {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"  # For CORS support
         },
         "body": json.dumps(body)
     }
