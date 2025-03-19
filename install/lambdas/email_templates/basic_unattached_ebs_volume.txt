@@ -1,0 +1,8 @@
+
+Unattached EBS Volumes
+The account has EBS volumes which are not attached to an instance. 
+It's recommended to check if the unattached EBS volumes are needed.  If they are not, consider deleting them.
+https://docs.aws.amazon.com/prescriptive-guidance/latest/optimize-costs-microsoft-workloads/ebs-delete-ebs-volumes.html
+
+***UNATTACHED_EBS_VOLUMES***
+

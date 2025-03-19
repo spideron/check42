@@ -62,6 +62,9 @@ class Logger:
                         case CheckType.UNUSED_EIP.value:
                             for info in processed_check['info']:
                                 message += f"Region: {info['region']}. IP: {info['publicIp']}\n\n"
+                        case CheckType.UNATTACHED_EBS_VOLUMES.value:
+                            for info in processed_check['info']:
+                                message += f"Region: {info['region']}. Volume: {info['volume_id']}. Size: {info['size']}\n\n"
                     
                     item_uuid = uuid.uuid4()
                     item_id = str(item_uuid)

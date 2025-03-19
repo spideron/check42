@@ -119,6 +119,7 @@
                             "budgets:ViewBudget",
                             "ec2:DescribeRegions",
                             "ec2:DescribeAddresses",
+                            "ec2:DescribeVolumes",
                             "iam:GetAccountPasswordPolicy",
                             "iam:GetAccountSummary",
                             "tag:GetResources"
@@ -212,6 +213,16 @@
                     "emailTemplates": {
                         "baseFileName": "basic_unused_eip",
                         "itemFileName": "basic_unused_eip_item"
+                    },
+                    "config": {
+                        "regions": ["us-west-2", "us-east-1"]
+                    }
+                },
+                {
+                    "name": "UNATTACHED_EBS_VOLUMES",
+                    "emailTemplates": {
+                        "baseFileName": "basic_unattached_ebs_volume",
+                        "itemFileName": "basic_unattached_ebs_volume_item"
                     },
                     "config": {
                         "regions": ["us-west-2", "us-east-1"]

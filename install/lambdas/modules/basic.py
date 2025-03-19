@@ -111,6 +111,11 @@ class Basic:
                         if len(unused_eips) > 0:
                             result['pass'] = False
                             result['info'] = unused_eips
+                    case CheckType.UNATTACHED_EBS_VOLUMES.value:
+                        unattached_ebs_volumes = self.check_unattached_ebs_volumes(c)
+                        if len(unattached_ebs_volumes) > 0:
+                            result['pass'] = False
+                            result['info'] = unattached_ebs_volumes
                             
                 results.append(result)
                         
@@ -385,3 +390,45 @@ class Basic:
             raise(e)
         
         return unused_eips
+    
+    def check_unattached_ebs_volumes(self, check_info: dict) -> list:
+        """
+        Check for unattached EBS volumes
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of unattached EBS volumes. Empty list if there are none
+        """
+        
+        unattached_ebs_volumes = []
+        regions = []
+        
+        try:
+            if 'config' in check_info:
+                check_config = json.loads(check_info['config'])
+                if 'regions' in check_config:
+                    regions = self.get_region_list(check_config['regions'])
+                    
+            for region in regions:
+                ec2 = boto3.resource('ec2', region_name=region)
+                
+                # Filter for available (unattached) volumes
+                volumes = ec2.volumes.filter(
+                    Filters=[{'Name': 'status', 'Values': ['available']}]
+                )
+                
+                for volume in volumes:
+                    volume_info = {
+                        'region': region,
+                        'volume_id': volume.id,
+                        'size': f"{volume.size} GB"
+                    }
+                    
+                    unattached_ebs_volumes.append(volume_info)
+            
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return unattached_ebs_volumes

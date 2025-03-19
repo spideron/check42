@@ -25,7 +25,10 @@ def get_checks():
         # Get the items from the response
         items = response.get('Items', [])
         
-        return items
+        # Sort the itmes to get a consistent check list
+        sorted_items = sorted(items, key=lambda x: x.get('name', ''))
+        
+        return sorted_items
     
     except ClientError as e:
         print("Error: {}".format(e.response['Error']['Message']))
