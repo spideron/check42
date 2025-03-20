@@ -72,10 +72,62 @@ class Templates:
         
 
 class Message:
-     def __init__(self, message_html: str, message_text:str, subject = '') -> None:
-         self.subject = subject
-         self.message_html = message_html
-         self.message_text = message_text
+    def __init__(self, message_html: str, message_text:str, subject = '') -> None:
+        """
+        Initialize a message object
+        
+        Args:
+            message_html (str): The message in an HTML format
+            message_text (str): The message in plain text
+            subject (str): Optional. A message subject
+        """
+        self.subject = subject
+        self.message_html = message_html
+        self.message_text = message_text
+    
+    @staticmethod
+    def from_template(template: Template, text_map = None, html_map = None, item_text_map = None, item_html_map = None,
+                        items = None):
+        
+        message_html = template.html or ''
+        message_text = template.txt or ''
+        
+        if items is not None:
+            item_text = ''
+            item_html = ''
+
+            for item in items:
+                if template.item_txt is not None and item_text_map is not None:
+                    template_item_text = template.item_txt
+                    for key, value in item_text_map.items():
+                        if value in item:
+                            template_item_text = template_item_text.replace(key, item[value])
+                    
+                    item_text += template_item_text
+                    
+                
+                if template.item_html is not None and item_html_map is not None:
+                    template_item_html = template.item_html
+                    for key, value in item_html_map.items():
+                        if value in item:
+                            template_item_html = template_item_html.replace(key, item[value])
+                    
+                    item_html += template_item_html
+        
+            message_text = message_text.replace('***ITEMS***', item_text)
+            message_html = message_html.replace('***ITEMS***', item_html)
+            
+        if text_map is not None:
+            for key, value in text_map.items():
+                message_text = message_text.replace(key, value)
+        
+        if html_map is not None:
+            for key, value in html_map.items():
+                message_html = message_html.replace(key, value)
+
+        
+        return Message(message_html, message_text)
+    
 
 
 class Mailer:
@@ -94,6 +146,26 @@ class Mailer:
         self.ses_client = boto3.client('ses')
         self.email_templates = Templates(checks)
 
+    def replace_sections(self, input_string, replacements):
+        """
+        Replace sections in a string according to a mapping dictionary.
+        
+        Args:
+            input_string (str): The string containing sections to replace
+            replacements (dict): Dictionary mapping sections to their replacements
+        
+        Returns:
+            str: The string with all replacements applied
+        """
+        result = ''
+        
+        if input_string is not None:
+            result = input_string
+            
+            for key, value in replacements.items():
+                result = result.replace(key, value)
+        
+        return result
     
     def send(self, message: Message) -> None:
         """
@@ -207,62 +279,39 @@ class Mailer:
         """
         
         template = self.email_templates.get_template(check_type)
-        html = ''
-        txt = ''
-        
-        if template.html is not None:
-            html = template.html
-        if template.txt is not None:
-            txt = template.txt
-            
-        message = Message(html, txt)
-        return message
+        return Message.from_template(template)
         
     
-    def compile_missing_tags_message(self, required_tags: str, missing_tags_resource: list) -> Message:
+    def compile_missing_tags_message(self, required_tags: str, missing_tags_resource: dict) -> Message:
         """
         Compile missing tags email section
         
         Args:
             required_tags (list): A string representing a list of required tags
-            missing_tags_resource (str): A list of missing tags resources recorded by AWS Config
+            missing_tags_resource (dict): A list of missing tags resources recorded by AWS Config
         
         Returns (Message): A Message object containig the email text and html sections
         """
-        
-        item_text = ''
-        item_html = ''
-        missing_tags_text = ''
-        missing_tags_html = ''
         template = self.email_templates.get_template(CheckType.MISSING_TAGS.value)
+        items = []
         
-        for key, value in missing_tags_resource.items():
-            if value:  # Check if the array is not empty
-                for t in value:
-                    template_text = ''
-                    template_html = ''
-                
-                    if template.item_txt is not None:
-                        template_text = template.item_txt.replace(
-                            '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn'])
-                    
-                    if template.item_html is not None:
-                        template_html = template.item_html.replace(
-                        '***RESOURCE_TYPE***', t['resource_type']).replace('***RESOURCE_ID***', t['resource_arn']).replace(
-                            '***RESOURCE_URL***', '')
-                
-                    item_text += template_text
-                    item_html += template_html
+        for item in missing_tags_resource.values():
+            if isinstance(item, list):
+                for i in item:
+                    items.append(i)
         
-        if template.txt is not None:
-            missing_tags_text = template.txt.replace(
-                '***MISSING_TAGS_LIST***', item_text).replace('***TAGS***', required_tags)
-          
-        if template.html is not None: 
-            missing_tags_html = template.html.replace(
-                '***MISSING_TAGS_LIST***', item_html).replace('***TAGS***', required_tags)
+        text_map = {
+            '***TAGS***': required_tags
+        }
+        html_map = text_map
+        item_text_map = {
+            '***RESOURCE_TYPE***': 'resource_type',
+            '***RESOURCE_ID***': 'resource_arn'
+        }
+        item_html_map = item_text_map
+        message = Message.from_template(template=template, text_map=text_map, html_map=html_map, 
+                                        item_text_map=item_text_map, item_html_map=item_html_map, items=items)
         
-        message = Message(missing_tags_html, missing_tags_text)
         return message
         
     
@@ -275,30 +324,25 @@ class Mailer:
         
         Returns (Message): A Message object containing the email text and html sections
         """
-        bucket_list_text = ''
-        bucket_list_html = ''
-        findings_text = ''
-        findings_html = ''
         template = self.email_templates.get_template(CheckType.PUBLIC_BUCKETS.value)
+        items = []
         
-        for bucket_info in processed_checks:
-            bucket_name = bucket_info['bucket_name']
-            reasons = bucket_info['reasons']
-            
-            if template.item_txt is not None:
-                bucket_list_text += template.item_txt.replace(
-                    '***BUCKET_NAME***', bucket_name).replace('***REASON***', '\n'.join(reasons))
-            
-            if template.item_html is not None:    
-                bucket_list_html += template.item_html.replace(
-                    '***BUCKET_NAME***', bucket_name).replace('***REASON***', '<br/>'.join(reasons))
+        for item in processed_checks:
+            items.append({
+                'bucket_name': item['bucket_name'],
+                'reasons': '<br/>\n'.join(item['reasons'])
+            })
         
-        if template.txt is not None:
-            findings_text = template.txt.replace('***S3_BUCKETS_LIST***', bucket_list_text)
-        if template.html is not None:
-            findings_html = template.html.replace('***S3_BUCKETS_LIST***', bucket_list_html)
         
-        message = Message(findings_html, findings_text)
+        item_text_map = {
+            '***BUCKET_NAME***': 'bucket_name',
+            '***REASON***': 'reasons'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
         return message
         
     
@@ -311,35 +355,18 @@ class Mailer:
         
         Returns (Message): A Message object containig the email text and html sections
         """
-        
-        eip_list_text = ''
-        eip_list_html = ''
-        findings_text = ''
-        findings_html = ''
         template = self.email_templates.get_template(CheckType.UNUSED_EIP.value)
+        items = processed_checks
         
-        for eip in processed_checks:
-            region = eip['region']
-            allocation_id = eip['allocationId']
-            public_ip = eip['publicIp']
-            tags = ' | '.join(eip['tags'])
-            
-            if template.item_txt is not None:
-                eip_list_text += template.item_txt.replace(
-                    '***REGION***', region).replace('***IP_ADDRESS***', public_ip).replace(
-                        '***TAGS***', tags)
-            
-            if template.item_html is not None:    
-                eip_list_html += template.item_html.replace(
-                    '***REGION***', region).replace('***IP_ADDRESS***', public_ip).replace(
-                        '***TAGS***', tags)
+        item_text_map = {
+            '***REGION***': 'region',
+            '***IP_ADDRESS***': 'publicIp'
+        }
+        item_html_map = item_text_map
         
-        if template.txt is not None:
-            findings_text = template.txt.replace('***UNUSED_EIPS***', eip_list_text)
-        if template.html is not None:
-            findings_html = template.html.replace('***UNUSED_EIPS***', eip_list_html)
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
         
-        message = Message(findings_html, findings_text)
         return message
     
     
@@ -352,32 +379,18 @@ class Mailer:
         
         Returns (Message): A Message object containig the email text and html sections
         """
-        
-        ebs_list_text = ''
-        ebs_list_html = ''
-        findings_text = ''
-        findings_html = ''
         template = self.email_templates.get_template(CheckType.UNATTACHED_EBS_VOLUMES.value)
         
-        for ebs in processed_checks:
-            region = ebs['region']
-            volume_id = ebs['volume_id']
-            size = ebs['size']
-            
-            if template.item_txt is not None:
-                ebs_list_text += template.item_txt.replace(
-                    '***REGION***', region).replace('***VOLUME_ID***', volume_id).replace(
-                        '***VOLUME_SIZE***', size)
-            
-            if template.item_html is not None:    
-                ebs_list_html += template.item_html.replace(
-                    '***REGION***', region).replace('***VOLUME_ID***', volume_id).replace(
-                        '***VOLUME_SIZE***', size)
-            
-        if template.txt is not None:
-            findings_text = template.txt.replace('***UNATTACHED_EBS_VOLUMES***', ebs_list_text)
-        if template.html is not None:
-            findings_html = template.html.replace('***UNATTACHED_EBS_VOLUMES***', ebs_list_html)
+        items = processed_checks
         
-        message = Message(findings_html, findings_text)
+        item_text_map = {
+            '***REGION***': 'region',
+            '***VOLUME_ID***': 'volume_id',
+            '***VOLUME_SIZE***': 'size'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
         return message

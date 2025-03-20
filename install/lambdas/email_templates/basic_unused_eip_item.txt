@@ -1,2 +1,2 @@
 
-Region: ***REGION***. IP: ***IP_ADDRESS***. Tags: ***TAGS***
+Region: ***REGION***. IP: ***IP_ADDRESS***

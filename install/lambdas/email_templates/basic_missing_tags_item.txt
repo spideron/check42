@@ -1,1 +1,2 @@
+
 Resource Type: ***RESOURCE_TYPE***. ***RESOURCE_ID***
