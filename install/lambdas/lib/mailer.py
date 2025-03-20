@@ -146,27 +146,6 @@ class Mailer:
         self.ses_client = boto3.client('ses')
         self.email_templates = Templates(checks)
 
-    def replace_sections(self, input_string, replacements):
-        """
-        Replace sections in a string according to a mapping dictionary.
-        
-        Args:
-            input_string (str): The string containing sections to replace
-            replacements (dict): Dictionary mapping sections to their replacements
-        
-        Returns:
-            str: The string with all replacements applied
-        """
-        result = ''
-        
-        if input_string is not None:
-            result = input_string
-            
-            for key, value in replacements.items():
-                result = result.replace(key, value)
-        
-        return result
-    
     def send(self, message: Message) -> None:
         """
         Send an email using SES
