@@ -117,6 +117,12 @@
                             "ec2:DescribeRegions",
                             "ec2:DescribeAddresses",
                             "ec2:DescribeVolumes",
+                            "ec2:DescribeVpcs",
+                            "ec2:DescribeInstances",
+                            "ec2:DescribeSecurityGroups",
+                            "ec2:DescribeSubnets",
+                            "ec2:DescribeNetworkInterfaces",
+                            "elasticloadbalancing:DescribeLoadBalancers",
                             "iam:GetAccountPasswordPolicy",
                             "iam:GetAccountSummary",
                             "tag:GetResources"
@@ -188,7 +194,6 @@
                         "itemFileName": "basic_missing_tags_item"
                     },
                     "config": {
-                        "regions": ["us-west-2", "us-east-1"],
                         "requiredTags": ["environment", "project"],
                         "resources": [
                             "ec2",
@@ -227,9 +232,6 @@
                     "emailTemplates": {
                         "baseFileName": "basic_unused_eip",
                         "itemFileName": "basic_unused_eip_item"
-                    },
-                    "config": {
-                        "regions": ["us-west-2", "us-east-1"]
                     }
                 },
                 {
@@ -239,6 +241,18 @@
                     "emailTemplates": {
                         "baseFileName": "basic_unattached_ebs_volume",
                         "itemFileName": "basic_unattached_ebs_volume_item"
+                    }
+                },
+                {
+                    "name": "USING_DEFAULT_VPC",
+                    "title": "Default VPC is in use",
+                    "description": "Check if the default VPC exists and if there are any resources in it. It is recommended to create a custom VPC and control the network configuration",
+                    "emailTemplates": {
+                        "baseFileName": "basic_default_vpc",
+                        "itemFileName": "basic_default_vpc_item"
+                    },
+                    "config":{
+                        "regions": ["us-west-2"]
                     }
                 }
             ]

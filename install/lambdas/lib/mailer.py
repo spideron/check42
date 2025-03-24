@@ -231,6 +231,8 @@ class Mailer:
                         message = self.compile_unused_eips(c['info'])
                     case CheckType.UNATTACHED_EBS_VOLUMES.value:
                         message = self.compile_unattached_ebs_volumes_message(c['info'])
+                    case CheckType.USING_DEFAULT_VPC.value:
+                        message = self.compile_default_vpc_usage_message(c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -366,6 +368,31 @@ class Mailer:
             '***REGION***': 'region',
             '***VOLUME_ID***': 'volume_id',
             '***VOLUME_SIZE***': 'size'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
+        return message
+    
+    
+    def compile_default_vpc_usage_message(self, processed_checks: list) -> Message:
+        """
+        Compile using default VPC email section
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        template = self.email_templates.get_template(CheckType.USING_DEFAULT_VPC.value)
+        
+        items = processed_checks
+        
+        item_text_map = {
+            '***REGION***': 'region',
+            '***RESOURCE***': 'resource'
         }
         item_html_map = item_text_map
         

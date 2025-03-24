@@ -125,6 +125,11 @@ class Basic:
                         if len(unattached_ebs_volumes) > 0:
                             result['pass'] = False
                             result['info'] = unattached_ebs_volumes
+                    case CheckType.USING_DEFAULT_VPC.value:
+                        default_vpc_resources = self.check_using_default_vpc(c)
+                        if len(default_vpc_resources) > 0:
+                            result['pass'] = False
+                            result['info'] = default_vpc_resources
                             
                 results.append(result)
                         
@@ -441,3 +446,106 @@ class Basic:
             raise(e)
         
         return unattached_ebs_volumes
+        
+    
+    def check_using_default_vpc(self, check_info: dict) -> list:
+        """
+        Check for default VPC usage
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of resources in a default vpc. Empty list if there's no default vpc
+        """
+        
+        default_vpc_resources = []
+        
+        try:
+            if 'config' in check_info:
+                check_config = json.loads(check_info['config'])
+                if 'regions' in check_config:
+                    regions = self.get_region_list(check_config)
+                    
+            for region in regions:
+                ec2 = boto3.client('ec2', region_name=region)
+                response = ec2.describe_vpcs()
+                
+                default_vpc = None
+                for vpc in response['Vpcs']:
+                    if vpc.get('IsDefault', False):
+                        default_vpc = vpc
+                        break
+                
+                if default_vpc:
+                    vpc_id = default_vpc['VpcId']
+                    
+                    # Collect EC2 Instances details
+                    instances = ec2.describe_instances(
+                        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+                    )
+                    for reservation in instances['Reservations']:
+                        for instance in reservation['Instances']:
+                            instance_id = instance['InstanceId']
+                            instance_name = instance.get('KeyName', '')
+                            
+                            default_vpc_resources.append({
+                                'region': region,
+                                'resource': f'EC2 ({instance_name} - {instance_id})'
+                            })
+                    
+                    # Collect security groups details
+                    security_groups = ec2.describe_security_groups(
+                        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+                    )
+                    for sg in security_groups['SecurityGroups']:
+                        group_name = sg['GroupName']
+                        group_id = sg['GroupId']
+                        
+                        default_vpc_resources.append({
+                                'region': region,
+                                'resource': f'Security Group ({group_name} - {group_id})'
+                            })
+                    
+                    # Collect subnets details
+                    subnets = ec2.describe_subnets(
+                        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+                    )
+                    for subnet in subnets['Subnets']:
+                        subnet_id = subnet['SubnetId']
+                        cidr_block = subnet['CidrBlock']
+                        
+                        default_vpc_resources.append({
+                                'region': region,
+                                'resource': f'Subnet ({cidr_block} - {subnet_id})'
+                            })
+                    
+                    # Collect network interfaces details
+                    network_interfaces = ec2.describe_network_interfaces(
+                        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}]
+                    )
+                    for ni in network_interfaces['NetworkInterfaces']:
+                        network_interface_id = ni['NetworkInterfaceId']
+                        
+                        default_vpc_resources.append({
+                                'region': region,
+                                'resource': f'Network Interface ({network_interface_id})'
+                            })
+                    
+                    # Collect elastic load balancers details
+                    elb = boto3.client('elbv2')
+                    load_balancers = elb.describe_load_balancers()
+                    for lb in load_balancers['LoadBalancers']:
+                        if lb.get('VpcId') == vpc_id:
+                            load_balancer_name = lb['LoadBalancerName']
+                            load_balancer_type = lb['Type']
+                            
+                            default_vpc_resources.append({
+                                'region': region,
+                                'resource': f'Load Balancer ({load_balancer_name} - {load_balancer_type})'
+                            })
+                            
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return default_vpc_resources
