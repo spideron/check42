@@ -86,10 +86,14 @@ for m in checks_config['modules']:
         item_uuid = uuid.uuid4()
         item_id = str(item_uuid)
         item_name = c['name']
+        item_title = c['title']
+        item_description = c['description'] 
         
         item={
                 "id": {'S': item_id},
                 "name": {'S': item_name},
+                "title": {'S': item_title},
+                "description": {'S': item_description},
                 "version": {'S': item_version},
                 "module": {'S': item_module},
                 "enabled": {'BOOL' : True},

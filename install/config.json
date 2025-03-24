@@ -156,18 +156,24 @@
             "version": "1.0",
             "checks": [{
                     "name": "NO_MFA_ON_ROOT",
+                    "title": "No MFA on Root",
+                    "description": "Check if multi-factor authentication (MFA) was set on the root account. As a security best practice, enable MFA for AWS account access, especially for long-term credentials such as the account root user and IAM users.",
                     "emailTemplates": {
                         "baseFileName": "basic_no_mfa_on_root"
                     }
                 },
                 {
                     "name": "NO_PASSWORD_POLICY",
+                    "title": "Password policy is not configured",
+                    "description": "Check if a password policy was set for the account. Require that passwords adhere to a strong password policy to help prevent discovery through brute force or social engineering.",
                     "emailTemplates": {
                         "baseFileName": "basic_no_password_policy"
                     }
                 },
                 {
                     "name": "PUBLIC_BUCKETS",
+                    "title": "Public S3 Buckets",
+                    "description": "Check if any of the S3 buckets on the account are set for a public access. It is recommended to keep private access to S3 buckets unless it's necessary",
                     "emailTemplates": {
                         "baseFileName": "basic_s3_public_access",
                         "itemFileName": "basic_s3_public_access_item"
@@ -175,6 +181,8 @@
                 },
                 {
                     "name": "MISSING_TAGS",
+                    "title": "Missing Tags",
+                    "description": "Check if the configured resources are set with the required tags. It is recommended to tag resources to help manage workloads and costs",
                     "emailTemplates": {
                         "baseFileName": "basic_missing_tags",
                         "itemFileName": "basic_missing_tags_item"
@@ -198,18 +206,24 @@
                 },
                 {
                     "name": "NO_BUSINESS_SUPPORT",
+                    "title": "No Premium Support",
+                    "description": "Check if the account is enrolled in premium support (business, enterprise, or enterprise on-ramp). It is recommended to enroll in premium support for any account with workloads in production",
                     "emailTemplates": {
                         "baseFileName": "basic_no_premium_support"
                     }
                 },
                 {
                     "name": "NO_BUDGET",
+                    "title": "No Budget Set",
+                    "description": "Check if there's at least one budget set on the account. It is recommended to have a budget set in order o monitor and control costs",
                     "emailTemplates": {
                         "baseFileName": "basic_no_budget"
                     }
                 },
                 {
                     "name": "UNUSED_EIP",
+                    "title": "Unused Elastic IPs",
+                    "description": "Check if there are unused Elastic IPs (EIPs). It is recommended to release any unused EIPs",
                     "emailTemplates": {
                         "baseFileName": "basic_unused_eip",
                         "itemFileName": "basic_unused_eip_item"
@@ -220,6 +234,8 @@
                 },
                 {
                     "name": "UNATTACHED_EBS_VOLUMES",
+                    "title": "Unattached EBS Volumes",
+                    "description": "Check if there are EBS volumes not attached to an instance. It is recommended to delete EBS volumes if they have no use anymore",
                     "emailTemplates": {
                         "baseFileName": "basic_unattached_ebs_volume",
                         "itemFileName": "basic_unattached_ebs_volume_item"
