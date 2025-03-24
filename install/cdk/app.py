@@ -35,12 +35,6 @@ install_config['account'] = account
 # If the sender email is set as an environment variable, override the config sections
 if sender_email is not None:
     install_config['ses']['senderEmail'] = sender_email
-    install_config['lambda']['functions']['run']['environment']['senderEmail'] = sender_email
-
-# If the recipient email is set as an environment variable, override the config section
-if recipient_email is not None:
-    install_config['lambda']['functions']['run']['environment']['recipientEmail'] = recipient_email
-
 
 app = cdk.App()
 

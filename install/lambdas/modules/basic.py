@@ -7,9 +7,10 @@ from botocore.exceptions import ClientError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from lib.check_type import CheckType
+from lib.settings import Settings
 
 class Basic:
-    def __init__(self, checks: list) -> None:
+    def __init__(self, checks: list, settings: Settings) -> None:
         """
         Initialize the Basic checks module
         
@@ -17,26 +18,34 @@ class Basic:
             checks (list): A list of checks to run
         """
         self.checks = checks
+        self.settings = settings
     
-    def get_region_list(self, regions: list) -> list:
+    def get_region_list(self, config: dict) -> list:
         """
         Get a list of regions from a config section
         
         Args:
-            regions (list): A list of region names or ['*'] for all available regions
+            config (dict): A check config 
         
         Returns (list): A list of regions
         """
         
-        region_list = []
+        region_response = []
+        regions = []
+        
+        if 'regions' in config:
+            regions = config['regions']
+        elif 'regions' in self.settings.defaults:
+            regions = self.settings.defaults['regions']
+            
         
         if len(regions) == 1 and regions[0] == "*":
             ec2_client = boto3.client('ec2')
-            region_list = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+            region_response = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
         else:
-            region_list = regions
+            region_response = regions
         
-        return region_list
+        return region_response
     
     def has_required_tags(self, tags, required_tags):
         """
@@ -85,12 +94,12 @@ class Basic:
                         has_mfa = self.has_mfa_on_root()
                         if not has_mfa:
                             result['pass'] = False
-                            result['info'] = 'No MFA on Root'
+                            result['info'] = c['title']
                     case CheckType.NO_PASSWORD_POLICY.value:
                         has_password_policy = self.has_password_policy()
                         if not has_password_policy:
                             result['pass'] = False
-                            result['info'] = 'No Password Policy'
+                            result['info'] = c['title']
                     case CheckType.PUBLIC_BUCKETS.value:
                         public_buckets = self.check_s3_public_buckets()
                         if len(public_buckets) > 0:
@@ -100,12 +109,12 @@ class Basic:
                         has_premium_supprt = self.has_premuim_support()
                         if not has_premium_supprt:
                             result['pass'] = False
-                            result['info'] = 'No premium support found'
+                            result['info'] = c['title']
                     case CheckType.NO_BUDGET.value:
                         has_budget = self.has_budget()
                         if not has_budget:
                             result['pass'] = False
-                            result['info'] = 'No budget found'
+                            result['info'] = c['title']
                     case CheckType.UNUSED_EIP.value:
                         unused_eips = self.check_unused_eip(c)
                         if len(unused_eips) > 0:
@@ -134,7 +143,7 @@ class Basic:
         
         non_compliant_resources = {}
         check_config = json.loads(check_info['config'])
-        regions = self.get_region_list(check_config['regions'])
+        regions = self.get_region_list(check_config)
         required_resources = check_config['resources']
         required_tags = check_config['requiredTags']
         
@@ -369,7 +378,7 @@ class Basic:
             if 'config' in check_info:
                 check_config = json.loads(check_info['config'])
                 if 'regions' in check_config:
-                    regions = self.get_region_list(check_config['regions'])
+                    regions = self.get_region_list(check_config)
             
             for region in regions:
                 regional_ec2 = boto3.client('ec2', region_name=region)
@@ -408,7 +417,7 @@ class Basic:
             if 'config' in check_info:
                 check_config = json.loads(check_info['config'])
                 if 'regions' in check_config:
-                    regions = self.get_region_list(check_config['regions'])
+                    regions = self.get_region_list(check_config)
                     
             for region in regions:
                 ec2 = boto3.resource('ec2', region_name=region)

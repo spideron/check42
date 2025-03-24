@@ -119,4 +119,8 @@ item = {
     "sender": {'S': sender_email},
     "schedule": {'S': ''}
     }
+
+if checks_config['defaults']:
+    item['defaults'] = {'S': json.dumps(checks_config['defaults'])}
+    
 put_item(settings_table_name, item)

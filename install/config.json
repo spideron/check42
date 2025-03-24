@@ -75,10 +75,6 @@
                 "timeout": 60,
                 "functionName": "run",
                 "fileLocation": "lambdas/aws_best_practices_run.py",
-                "environment": {
-                    "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable",
-                    "recipientEmail": "SET RECIPIENT EMAIL ADDRESS HERE OR USE AWS_RECIPIENT_EMAIL environment variable"
-                },
                 "includeFolders": ["email_templates"],
                 "iamPolicies": [{
                         "name": "dynamodb_access",
@@ -94,7 +90,8 @@
                         ],
                         "resources": [
                             "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks",
-                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_log"
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_log",
+                            "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_settings"
                         ]
                     },
                     {
@@ -151,6 +148,9 @@
         }
     },
     "checks": {
+        "defaults": {
+            "regions": ["us-west-2", "us-east-1"]
+        },
         "modules": [{
             "name": "basic",
             "version": "1.0",
@@ -239,9 +239,6 @@
                     "emailTemplates": {
                         "baseFileName": "basic_unattached_ebs_volume",
                         "itemFileName": "basic_unattached_ebs_volume_item"
-                    },
-                    "config": {
-                        "regions": ["us-west-2", "us-east-1"]
                     }
                 }
             ]
