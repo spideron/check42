@@ -42,48 +42,40 @@ def get_checks():
 
 def update_checks(checks):
     """
-    Batch update a list of check items in DynamoDB
+    Update checks in DynamoDB
     """
     
     failed_updates = []
-    
-    # DynamoDB batch_write_item can only process 25 items at a time
-    batch_size = 25
-    
-     # Process items in batches
-    for i in range(0, len(checks), batch_size):
-        batch = checks[i:i + batch_size]
+
+    # Process items and update the enabled field
+    for item in checks:
         try:
-            with table.batch_writer() as writer:
-                for item in batch:
-                    try:
-                        writer.put_item(Item={
-                            'id': item['id'],
-                            'enabled': item['enabled'],
-                            'module': item['module'],
-                            'muted': item['muted'],
-                            'name': item['name'],
-                            'template_message': item['template_message'],
-                            'version': item['version']
-                        })
-                    except Exception as e:
-                        print("Error updating item. {}".format(str(e)))
-                        failed_updates.append(item)
-                        
-        except ClientError as e:
-            print("Error in batch operation: {}".format(str(e)))
-            failed_updates.extend(batch)
-    
+            response = table.update_item(
+                Key={
+                    'id': item['id']
+                },
+                UpdateExpression='SET #field = :val',
+                ExpressionAttributeNames={
+                    '#field': 'enabled'
+                },
+                ExpressionAttributeValues={
+                    ':val': item['enabled']
+                },
+                ReturnValues="UPDATED_NEW"
+            )
+        except Exception as e:
+            print("Error updating item. {}".format(str(e)))
+            failed_updates.append(item)
+
     return len(failed_updates) == 0
-    
+
 
 def validate_checks(checks: list) -> list:
     """
     Validate the checks items before trying to update DynamoDB
     """
     errors = []
-    required_fields = ['id', 'enabled', 'module', 'muted', 'name', 'template_message', 'version']
-    
+    required_fields = ['id', 'enabled']
     if len(checks) == 0:
         errors.append("Empty checks list")
     else:
@@ -95,51 +87,36 @@ def validate_checks(checks: list) -> list:
                     errors.append("Invalid id field {}. Expected uuid4 format".format(check['id']))
                 if not isinstance(check['enabled'], bool):
                     errors.append("Invalid enabled field {}. Expected bool type".format(check['enabled']))
-                if check['module'] == '':
-                    errors.append("Invalid module field. Expected non empty string")
-                if not isinstance(check['muted'], bool):
-                    errors.append("Invalid muted field {}. Expected bool type".format(check['muted']))
-                if check['name'] == '':
-                    errors.append("Invalid name field. Expected non empty string")
-                if check['template_message'] == '':
-                    errors.append("Invalid template_message field. Expected non empty string")
-                if check['version'] == '':
-                    errors.append("Invalid version field. Expected non empty string")
-        
         if len(errors) > 0:
             for e in errors:
                 print(e)
-        
-        return errors
-        
-            
-        
-    
 
+        return errors
 
 def handler(event, context):
     errors=[]
     statusCode = 200
-    body = {
+    response_body = {
         'status': 'success',
         'message': ''
     }
-    
+
     try:
         if event.get('httpMethod') == 'GET':
             checks = get_checks()
-            
+
             if checks is None:
                 status_code = 500
                 errors.append('Could not retrieve check items')
             else:
                 status_code = 200
-                body['message'] = checks
-           
+                response_body['message'] = checks
+
         elif event.get('httpMethod') == 'PUT':
-            checks = event['body']
-            validation_erros = validate_checks(checks)
-            if len(validation_erros) > 0:
+            request_body = event['body']
+            checks = json.loads(request_body)["checks"]
+            validation_errors = validate_checks(checks)
+            if len(validation_errors) > 0:
                 status_code = 400
                 errors = validation_erros
             else:
@@ -147,7 +124,8 @@ def handler(event, context):
                     status_code = 500
                     errors.append('Failed updating one or more checks. Check the logs')
                 else:
-                    body['message'] = "Update completed successfully"
+                    status_code = 200
+                    response_body['message'] = "Update completed successfully"
         else:
             status_code = 400
             errors.append('Unsupported HTTP method')
@@ -157,14 +135,14 @@ def handler(event, context):
         errors.append('Internal server error. Check the logs')
 
     if len(errors) > 0:
-        body['status'] = 'error'
-        body['message'] = errors
-    
+        response_body['status'] = 'error'
+        response_body['message'] = errors
+
     return {
         "statusCode": status_code,
         "headers": {
             "Content-Type": "application/json",
             "Access-Control-Allow-Origin": "*"  # For CORS support
         },
-        "body": json.dumps(body)
+        "body": json.dumps(response_body)
     }
