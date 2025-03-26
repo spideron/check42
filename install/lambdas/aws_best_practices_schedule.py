@@ -87,7 +87,8 @@ def handler(event, context):
                 status_code = 500
            
         elif event['httpMethod'] == 'PUT':
-            schedule = event['body'].lower() # Expecting Daily or weekly
+            request_body = event['body']
+            schedule = json.loads(request_body)["frequency"]
             if schedule == 'daily':
                 schedule_expression = "0 0 * * ? *"
             elif schedule == 'weekly':
@@ -126,7 +127,8 @@ def handler(event, context):
     return {
         "statusCode": status_code,
         "headers": {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+             "Access-Control-Allow-Origin": "*"  # For CORS support
         },
         "body": json.dumps(body)
     }
