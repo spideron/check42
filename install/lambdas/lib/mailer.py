@@ -26,19 +26,27 @@ class Templates:
         self.email_templates = {}
         cwd = os.getcwd()
         templates_location = f'{cwd}/email_templates/'
+        default_section_text_file = open(f'{templates_location}default_section.txt')
+        default_section_html_file = open(f'{templates_location}default_section.html')
+        default_section_text = default_section_text_file.read()
+        default_section_html = default_section_html_file.read()
         main_text_file = open(f'{templates_location}main.txt')
         main_html_file = open(f'{templates_location}main.html')
         template = Template(txt=main_text_file.read(), html=main_html_file.read())
         
         self.email_templates['main'] = template
         
+        
         for check in checks:
+            
+            template = Template()
+            template.title = check['title']
+            template.description = check['description']
+            template.txt = default_section_text
+            template.html = default_section_html
             
             if 'email_templates' in check:
                 email_template = json.loads(check['email_templates'])
-                template = Template()
-                template.title = check['title']
-                template.description = check['description']
                 
                 if 'baseFileName' in email_template:
                     file_txt_path = f'{templates_location}{email_template["baseFileName"]}.txt'
@@ -49,6 +57,7 @@ class Templates:
                     
                     if os.path.exists(file_html_path):
                         template.html = open(file_html_path).read()
+                
                 
                 if 'itemFileName' in email_template:
                     file_txt_path = f'{templates_location}{email_template["itemFileName"]}.txt'
@@ -99,6 +108,11 @@ class Message:
         message_html = template.html or ''
         message_text = template.txt or ''
         
+        message_text = message_text.replace('***TITLE***', template.title)
+        message_text = message_text.replace('***DESCRIPTION***', template.description)
+        message_html = message_html.replace('***TITLE***', template.title)
+        message_html = message_html.replace('***DESCRIPTION***', template.description)
+        
         if items is not None:
             item_text = ''
             item_html = ''
@@ -121,13 +135,11 @@ class Message:
                     
                     item_html += template_item_html
             
-            message_text = message_text.replace('***TITLE***', template.title)
-            message_text = message_text.replace('***DESCRIPTION***', template.description)
             message_text = message_text.replace('***ITEMS***', item_text)
-            
-            message_html = message_html.replace('***TITLE***', template.title)
-            message_html = message_html.replace('***DESCRIPTION***', template.description)
             message_html = message_html.replace('***ITEMS***', item_html)
+        else:
+            message_text = message_text.replace('***ITEMS***', '')
+            message_html = message_html.replace('***ITEMS***', '')
             
         if text_map is not None:
             for key, value in text_map.items():

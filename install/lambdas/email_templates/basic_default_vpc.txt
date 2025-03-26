@@ -1,8 +1,0 @@
-
-Default VPC Usage
-The checker looks for default VPC usage and found the following.
-https://docs.aws.amazon.com/vpc/latest/userguide/default-vpc.html
-It is recommended to create a custom VPC and control the network configuration
-https://docs.aws.amazon.com/vpc/latest/userguide/create-vpc.html
-
-***ITEMS***

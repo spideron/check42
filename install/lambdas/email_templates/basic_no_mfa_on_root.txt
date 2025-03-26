@@ -1,3 +1,0 @@
-
-Missing MFA on Root
-The checker could not find MFA set on the Root account. Please set an MFA on the root account - https://docs.aws.amazon.com/IAM/latest/UserGuide/enable-mfa-for-root.html

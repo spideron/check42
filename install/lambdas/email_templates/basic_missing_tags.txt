@@ -1,4 +1,4 @@
 
-Missing Tags
+***TITLE***
 The checker looks for the tags ***TAGS*** and finds the following resources without these tags
 ***ITEMS***

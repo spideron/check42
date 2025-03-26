@@ -1,4 +1,0 @@
-
-No Budget Found
-The account doens't have any budgets set. Please create at least one Monthly Budget.
-https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html
