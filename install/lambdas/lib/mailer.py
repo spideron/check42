@@ -6,11 +6,14 @@ from botocore.exceptions import ClientError
 
     
 class Template:
-    def __init__(self, txt = None, html = None, item_txt = None, item_html = None) -> None:
+    def __init__(self, txt = None, html = None, item_txt = None, item_html = None,
+                    title = None, description = None) -> None:
         self.txt = txt
         self.html = html
         self.item_txt = item_txt
         self.item_html = item_html
+        self.title = title or ''
+        self.description = description or ''
 
 class Templates:
     def __init__(self, checks: list) -> None:
@@ -30,9 +33,13 @@ class Templates:
         self.email_templates['main'] = template
         
         for check in checks:
+            
             if 'email_templates' in check:
                 email_template = json.loads(check['email_templates'])
                 template = Template()
+                template.title = check['title']
+                template.description = check['description']
+                
                 if 'baseFileName' in email_template:
                     file_txt_path = f'{templates_location}{email_template["baseFileName"]}.txt'
                     file_html_path = f'{templates_location}{email_template["baseFileName"]}.html'
@@ -113,8 +120,13 @@ class Message:
                             template_item_html = template_item_html.replace(key, item[value])
                     
                     item_html += template_item_html
-        
+            
+            message_text = message_text.replace('***TITLE***', template.title)
+            message_text = message_text.replace('***DESCRIPTION***', template.description)
             message_text = message_text.replace('***ITEMS***', item_text)
+            
+            message_html = message_html.replace('***TITLE***', template.title)
+            message_html = message_html.replace('***DESCRIPTION***', template.description)
             message_html = message_html.replace('***ITEMS***', item_html)
             
         if text_map is not None:
@@ -233,6 +245,8 @@ class Mailer:
                         message = self.compile_unattached_ebs_volumes_message(c['info'])
                     case CheckType.USING_DEFAULT_VPC.value:
                         message = self.compile_default_vpc_usage_message(c['info'])
+                    case CheckType.EC2_IN_PUBLIC_SUBNET.value:
+                        message = self.compile_ec2_in_public_subnet_message(c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -400,3 +414,29 @@ class Mailer:
                                         items=items)
         
         return message
+        
+    
+    def compile_ec2_in_public_subnet_message(self, processed_checks: list) -> Message:
+        """
+        Compile EC2 instances running in public subnet email section
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        template = self.email_templates.get_template(CheckType.EC2_IN_PUBLIC_SUBNET.value)
+        
+        items = processed_checks
+        
+        item_text_map = {
+            '***REGION***': 'region',
+            '***INSTANCE***': 'instance'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
+        return message
+        

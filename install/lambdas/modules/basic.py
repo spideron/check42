@@ -20,12 +20,12 @@ class Basic:
         self.checks = checks
         self.settings = settings
     
-    def get_region_list(self, config: dict) -> list:
+    def get_region_list(self, check_info: dict) -> list:
         """
         Get a list of regions from a config section
         
         Args:
-            config (dict): A check config 
+            check_info (dict): check_info (dict): The check information as stored in the DB
         
         Returns (list): A list of regions
         """
@@ -33,12 +33,16 @@ class Basic:
         region_response = []
         regions = []
         
-        if 'regions' in config:
-            regions = config['regions']
-        elif 'regions' in self.settings.defaults:
+        # Use the default regions and override if the regions are explicitly configured
+        if 'regions' in self.settings.defaults:
             regions = self.settings.defaults['regions']
-            
         
+        if 'config' in check_info:
+            config = json.loads(check_info['config'])
+            
+            if 'regions' in config:
+                regions = config['regions']
+            
         if len(regions) == 1 and regions[0] == "*":
             ec2_client = boto3.client('ec2')
             region_response = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
@@ -130,6 +134,11 @@ class Basic:
                         if len(default_vpc_resources) > 0:
                             result['pass'] = False
                             result['info'] = default_vpc_resources
+                    case CheckType.EC2_IN_PUBLIC_SUBNET.value:
+                        ec2_in_public_subnets = self.check_ec2_in_public_subnet(c)
+                        if len(ec2_in_public_subnets) > 0:
+                            result['pass'] = False
+                            result['info'] = ec2_in_public_subnets
                             
                 results.append(result)
                         
@@ -147,8 +156,8 @@ class Basic:
         """
         
         non_compliant_resources = {}
+        regions = self.get_region_list(check_info)
         check_config = json.loads(check_info['config'])
-        regions = self.get_region_list(check_config)
         required_resources = check_config['resources']
         required_tags = check_config['requiredTags']
         
@@ -377,14 +386,9 @@ class Basic:
         Returns (list): A list of unused elastic ips. Empty list if there are none
         """
         unused_eips = []
-        regions = []
+        regions = self.get_region_list(check_info)
         
         try:
-            if 'config' in check_info:
-                check_config = json.loads(check_info['config'])
-                if 'regions' in check_config:
-                    regions = self.get_region_list(check_config)
-            
             for region in regions:
                 regional_ec2 = boto3.client('ec2', region_name=region)
                 addresses = regional_ec2.describe_addresses()['Addresses']
@@ -416,14 +420,9 @@ class Basic:
         """
         
         unattached_ebs_volumes = []
-        regions = []
+        regions = self.get_region_list(check_info)
         
         try:
-            if 'config' in check_info:
-                check_config = json.loads(check_info['config'])
-                if 'regions' in check_config:
-                    regions = self.get_region_list(check_config)
-                    
             for region in regions:
                 ec2 = boto3.resource('ec2', region_name=region)
                 
@@ -459,13 +458,9 @@ class Basic:
         """
         
         default_vpc_resources = []
+        regions = self.get_region_list(check_info)
         
         try:
-            if 'config' in check_info:
-                check_config = json.loads(check_info['config'])
-                if 'regions' in check_config:
-                    regions = self.get_region_list(check_config)
-                    
             for region in regions:
                 ec2 = boto3.client('ec2', region_name=region)
                 response = ec2.describe_vpcs()
@@ -549,3 +544,76 @@ class Basic:
             raise(e)
         
         return default_vpc_resources
+    
+    
+    def check_ec2_in_public_subnet(self, check_info: dict) -> list:
+        """
+        Check for EC2 instances running in public subnets
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of EC2 instances running in a public subnet. Empty list if there are non
+        """
+        instances_in_public_subnets = []
+        regions = self.get_region_list(check_info)
+        
+        try:
+            for region in regions:
+                ec2_client = boto3.client('ec2', region_name=region)
+                instances_response = ec2_client.describe_instances()
+                subnets_response = ec2_client.describe_subnets()
+                
+                # Create a dictionary of subnet IDs to their public/private status
+                public_subnets = {}
+                for subnet in subnets_response['Subnets']:
+                    subnet_id = subnet['SubnetId']
+                    
+                    # A subnet is public if it has a route to an Internet Gateway
+                    is_public = False
+                    
+                    # Get the route table associated with this subnet
+                    route_tables = ec2_client.describe_route_tables(
+                        Filters=[{'Name': 'association.subnet-id', 'Values': [subnet_id]}]
+                    )
+                    
+                    # If no explicit association, check the main route table for the VPC
+                    if not route_tables['RouteTables']:
+                        vpc_id = subnet['VpcId']
+                        route_tables = ec2_client.describe_route_tables(
+                            Filters=[
+                                {'Name': 'vpc-id', 'Values': [vpc_id]},
+                                {'Name': 'association.main', 'Values': ['true']}
+                            ]
+                        )
+                    
+                    # Check routes for an internet gateway
+                    for rt in route_tables.get('RouteTables', []):
+                        for route in rt.get('Routes', []):
+                            if route.get('GatewayId', '').startswith('igw-'):
+                                is_public = True
+                                break
+                    
+                    public_subnets[subnet_id] = is_public
+                    
+                # Find instances in public subnets
+                for reservation in instances_response['Reservations']:
+                    for instance in reservation['Instances']:
+                        instance_id = instance['InstanceId']
+                        subnet_id = instance['SubnetId']
+                        
+                        if public_subnets.get(subnet_id, False):
+                            instance_id = instance['InstanceId']
+                            instance_name = instance.get('KeyName', 'N/A')
+                            
+                            instances_in_public_subnets.append({
+                                'region': region,
+                                'instance': f'{instance_name} - {instance_id}'
+                            })
+        
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        
+        return instances_in_public_subnets

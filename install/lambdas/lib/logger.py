@@ -68,6 +68,9 @@ class Logger:
                         case CheckType.USING_DEFAULT_VPC.value:
                             for info in processed_check['info']:
                                 message += f"Region: {info['region']}. Resource: {info['resource']}\n\n"
+                        case CheckType.EC2_IN_PUBLIC_SUBNET.value:
+                            for info in processed_check['info']:
+                                message += f"Region: {info['region']}. Instance: {info['instance']}\n\n"
                     
                     item_uuid = uuid.uuid4()
                     item_id = str(item_uuid)
