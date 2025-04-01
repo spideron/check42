@@ -26,10 +26,16 @@ class Templates:
         self.email_templates = {}
         cwd = os.getcwd()
         templates_location = f'{cwd}/email_templates/'
+        
         default_section_text_file = open(f'{templates_location}default_section.txt')
         default_section_html_file = open(f'{templates_location}default_section.html')
+        default_section_item_text_file = open(f'{templates_location}default_section_item.txt')
+        default_section_item_html_file = open(f'{templates_location}default_section_item.html')
         default_section_text = default_section_text_file.read()
         default_section_html = default_section_html_file.read()
+        default_section_item_text = default_section_item_text_file.read()
+        default_section_item_html = default_section_item_html_file.read()
+        
         main_text_file = open(f'{templates_location}main.txt')
         main_html_file = open(f'{templates_location}main.html')
         template = Template(txt=main_text_file.read(), html=main_html_file.read())
@@ -44,6 +50,8 @@ class Templates:
             template.description = check['description']
             template.txt = default_section_text
             template.html = default_section_html
+            template.item_txt = default_section_item_text
+            template.item_html = default_section_item_html
             
             if 'email_templates' in check:
                 email_template = json.loads(check['email_templates'])
@@ -69,7 +77,7 @@ class Templates:
                     if os.path.exists(file_html_path):
                         template.item_html = open(file_html_path).read()
                 
-                self.email_templates[check['name']] = template
+            self.email_templates[check['name']] = template
     
         
     def get_template(self, check_type: str) -> Template:
@@ -118,17 +126,17 @@ class Message:
             item_html = ''
 
             for item in items:
-                if template.item_txt is not None and item_text_map is not None:
-                    template_item_text = template.item_txt
+                template_item_text = template.item_txt
+                template_item_html = template.item_html
+                
+                if item_text_map is not None:
                     for key, value in item_text_map.items():
                         if value in item:
                             template_item_text = template_item_text.replace(key, item[value])
                     
                     item_text += template_item_text
-                    
-                
-                if template.item_html is not None and item_html_map is not None:
-                    template_item_html = template.item_html
+
+                if item_html_map is not None:
                     for key, value in item_html_map.items():
                         if value in item:
                             template_item_html = template_item_html.replace(key, item[value])
@@ -256,9 +264,13 @@ class Mailer:
                     case CheckType.UNATTACHED_EBS_VOLUMES.value:
                         message = self.compile_unattached_ebs_volumes_message(c['info'])
                     case CheckType.USING_DEFAULT_VPC.value:
-                        message = self.compile_default_vpc_usage_message(c['info'])
+                        message = self.compile_simple_message(CheckType.USING_DEFAULT_VPC.value, c['info'])
                     case CheckType.EC2_IN_PUBLIC_SUBNET.value:
                         message = self.compile_ec2_in_public_subnet_message(c['info'])
+                    case CheckType.RESOURCES_IN_OTHER_REGIONS.value:
+                        message = self.compile_resources_in_other_regions_message(c['info'])
+                    case CheckType.RDS_PUBLIC_ACCESS.value:
+                        message = self.compile_simple_message(CheckType.RDS_PUBLIC_ACCESS.value, c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -277,17 +289,37 @@ class Mailer:
         self.send(message)
     
     
-    def compile_simple_message(self, check_type: str) -> Message:
+    def compile_simple_message(self, check_type: str, processed_checks = []) -> Message:
         """
         Compile a simple message where there's no specific string replacement needed
         
         Args:
             check_type (str): The check type
+            processed_checks (list): Optional - list of items from the checker
+            
+        Returns (Message): A Message object containig the email text and html sections
         """
         
         template = self.email_templates.get_template(check_type)
-        return Message.from_template(template)
+        message = None
+
+        if len(processed_checks) > 0:
+            items = processed_checks
         
+            item_text_map = {
+                '***REGION***': 'region',
+                '***RESOURCE***': 'resource'
+            }
+            item_html_map = item_text_map
+            
+            message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        else:
+            message = Message.from_template(template)
+        
+        
+        return message
+    
     
     def compile_missing_tags_message(self, required_tags: str, missing_tags_resource: dict) -> Message:
         """
@@ -403,31 +435,6 @@ class Mailer:
         return message
     
     
-    def compile_default_vpc_usage_message(self, processed_checks: list) -> Message:
-        """
-        Compile using default VPC email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.USING_DEFAULT_VPC.value)
-        
-        items = processed_checks
-        
-        item_text_map = {
-            '***REGION***': 'region',
-            '***RESOURCE***': 'resource'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-        
-    
     def compile_ec2_in_public_subnet_message(self, processed_checks: list) -> Message:
         """
         Compile EC2 instances running in public subnet email section
@@ -444,6 +451,32 @@ class Mailer:
         item_text_map = {
             '***REGION***': 'region',
             '***INSTANCE***': 'instance'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
+        return message
+        
+        
+    def compile_resources_in_other_regions_message(self, processed_checks: list) -> Message:
+        """
+        Compile resources running in other regions email section
+        
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        template = self.email_templates.get_template(CheckType.RESOURCES_IN_OTHER_REGIONS.value)
+        
+        items = processed_checks
+        
+        item_text_map = {
+            '***REGION***': 'region',
+            '***SERVICE***': 'service',
+            '***COST***': 'cost'
         }
         item_html_map = item_text_map
         

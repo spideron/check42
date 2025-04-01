@@ -3,6 +3,7 @@ import os
 import sys
 import json
 import aws_cdk as cdk
+import botocore.session
 from cdk.ddb_stack import DDBStack
 from cdk.lambda_stack import LambdaStack
 from cdk.events_stack import EventsStack
@@ -66,5 +67,6 @@ ses_stack = SESStack(app, "SESSTack",
     env=cdk.Environment(account=account, region=region)
 )
 ses_stack.create_ses_email_identity(sender_email)
+
 
 app.synth()

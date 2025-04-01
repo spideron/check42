@@ -123,10 +123,12 @@
                             "ec2:DescribeSubnets",
                             "ec2:DescribeNetworkInterfaces",
                             "ec2:DescribeRouteTables",
+                            "rds:DescribeDBInstances",
                             "elasticloadbalancing:DescribeLoadBalancers",
                             "iam:GetAccountPasswordPolicy",
                             "iam:GetAccountSummary",
-                            "tag:GetResources"
+                            "tag:GetResources",
+                            "ce:GetCostAndUsage"
                         ],
                         "resources": ["*"]
                     }
@@ -231,13 +233,7 @@
                 {
                     "name": "USING_DEFAULT_VPC",
                     "title": "Default VPC Is In Use",
-                    "description": "Check if the default VPC exists and if there are any resources in it. It is recommended to create a custom VPC and control the network configuration",
-                    "emailTemplates": {
-                        "itemFileName": "basic_default_vpc_item"
-                    },
-                    "config":{
-                        "regions": ["us-west-1", "us-west-2", "us-east-1", "us-east-2"]
-                    }
+                    "description": "Check if the default VPC exists and if there are any resources in it. It is recommended to create a custom VPC and control the network configuration"
                 },
                 {
                     "name": "EC2_IN_PUBLIC_SUBNET",
@@ -246,6 +242,22 @@
                     "emailTemplates": {
                         "itemFileName": "basic_ec2_in_public_subnet_item"
                     }
+                },
+                {
+                    "name": "RESOURCES_IN_OTHER_REGIONS",
+                    "title": "There are resources running in unintended regions",
+                    "description": "Check if there are resources in other regions than the intended ones",
+                    "emailTemplates": {
+                        "itemFileName": "basic_resources_in_other_regions_item"
+                    },
+                    "config":{
+                        "regions": ["us-west-2", "us-east-1"]
+                    }
+                },
+                {
+                    "name": "RDS_PUBLIC_ACCESS",
+                    "title": "RDS instance is set for public access",
+                    "description": "Check if RDS instance(s) are set for public access. It is recommended to keep RDS instances with private access when possible"
                 }
             ]
         }]

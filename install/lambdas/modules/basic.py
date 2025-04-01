@@ -3,6 +3,8 @@ import os
 import boto3
 import botocore
 import json
+import datetime
+from datetime import timedelta
 from botocore.exceptions import ClientError
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -20,6 +22,18 @@ class Basic:
         self.checks = checks
         self.settings = settings
     
+    def get_all_regions(self) -> list:
+        """
+        Get a list of all regions
+        
+        Returns (list): A list of regions
+        """
+        ec2_client = boto3.client('ec2')
+        regions = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+        
+        return regions
+        
+        
     def get_region_list(self, check_info: dict) -> list:
         """
         Get a list of regions from a config section
@@ -44,8 +58,7 @@ class Basic:
                 regions = config['regions']
             
         if len(regions) == 1 and regions[0] == "*":
-            ec2_client = boto3.client('ec2')
-            region_response = [region['RegionName'] for region in ec2_client.describe_regions()['Regions']]
+            region_response = self.get_all_regions()
         else:
             region_response = regions
         
@@ -139,6 +152,16 @@ class Basic:
                         if len(ec2_in_public_subnets) > 0:
                             result['pass'] = False
                             result['info'] = ec2_in_public_subnets
+                    case CheckType.RESOURCES_IN_OTHER_REGIONS.value:        
+                        resources = self.check_for_resources_in_other_regions(c)
+                        if len(resources) > 0:
+                            result['pass'] = False
+                            result['info'] = resources
+                    case CheckType.RDS_PUBLIC_ACCESS.value:        
+                        resources = self.check_for_public_rds(c)
+                        if len(resources) > 0:
+                            result['pass'] = False
+                            result['info'] = resources
                             
                 results.append(result)
                         
@@ -617,3 +640,109 @@ class Basic:
         
         
         return instances_in_public_subnets
+    
+    
+    def check_for_resources_in_other_regions(self, check_info: dict) -> list:
+        """
+        Check if there are resources in other regions than the intended ones
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of resources running in unintended regions. Empty list if there are non
+        """
+        resources_in_other_regions = []
+        
+        all_regions = self.get_all_regions()
+        intended_regions = self.get_region_list(check_info)
+        intended_regions.extend(['global', 'noregion'])
+        
+        # Get today's date and first day of the month
+        end_date = datetime.datetime.now().date()
+        start_date = end_date.replace(day=1)
+        
+        # Format dates as strings (YYYY-MM-DD)
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        
+        # The end date can't be the same as the start date, in case of the 1st of the month.
+        if end_date.strftime('%d') == '01':
+            end_date_str = end_date.strftime('%Y-%m-02')
+        else:
+            end_date_str = end_date.strftime('%Y-%m-%d')
+                
+        try:
+            client = boto3.client('ce')
+            response = client.get_cost_and_usage(
+                TimePeriod={
+                    'Start': start_date_str,
+                    'End': end_date_str
+                },
+                Granularity='MONTHLY',
+                Metrics=['BlendedCost', 'UsageQuantity'],
+                GroupBy=[
+                    {
+                        'Type': 'DIMENSION',
+                        'Key': 'SERVICE'
+                    },
+                    {
+                        'Type': 'DIMENSION',
+                        'Key': 'REGION'
+                    }
+                ]
+            )   
+        
+            for group in response['ResultsByTime'][0]['Groups']:
+                service_region = group['Keys']
+                service = service_region[0]
+                region = service_region[1] if service_region[1] != '' else 'global'
+                
+                if region.lower() not in intended_regions:
+                    cost = float(group['Metrics']['BlendedCost']['Amount'])
+                    
+                    if cost > 0:
+                        resources_in_other_regions.append({
+                            'region': region,
+                            'service': service,
+                            'cost': f'${round(cost, 2)}'
+                        })
+        
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return resources_in_other_regions
+    
+    
+    def check_for_public_rds(self, check_info: dict) -> list:
+        """
+        Check if there are any RDS instances set for public access
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of RDS instances with public access. Empty list if there are non
+        """
+        
+        public_rds_instances = []
+        regions = self.get_region_list(check_info)
+        
+        try:
+            for region in regions:
+                rds_client = boto3.client('rds', region_name=region)
+                response = rds_client.describe_db_instances()
+                
+                for instance in response.get('DBInstances', []):
+                    if instance.get('PubliclyAccessible'):
+                        rds_id = instance.get('DBInstanceIdentifier')
+                        rds_engine = instance.get('Engine')
+                        
+                        public_rds_instances.append({
+                            'region': region,
+                            'resource': f'RDS Id: {rds_id}. Engine: {rds_engine}'
+                        })
+        
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return public_rds_instances
