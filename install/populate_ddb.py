@@ -2,6 +2,9 @@ import os
 import boto3
 import uuid
 import json
+import secrets
+import string
+import hashlib
 
 region = boto3.session.Session().region_name
 account_id = boto3.client('sts').get_caller_identity()['Account']
@@ -22,7 +25,41 @@ def get_name_with_prefix(name: str):
     """
     return '{}_{}'.format(install_config['prefix'], name)
     
+def generate_password(length=12):
+    """
+    Generates a cryptographically secure random password
+
+    Args:
+        length: The desired length of the password (default: 12).
+
+    Returns:
+        A string representing the generated password
+    """
+
+    alphabet = string.ascii_letters + string.digits + string.punctuation
+    while True:
+        password = ''.join(secrets.choice(alphabet) for i in range(length))
+        if (any(c.islower() for c in password)
+                and any(c.isupper() for c in password)
+                and any(c.isdigit() for c in password)):
+            break
+
+    return password
+
+def hash_password(password):
+    """
+    Hash a password using sha256
     
+    Args:
+        password: The password input to hash
+    
+    Returns:
+        Hashed version of the password
+    """
+    hash_object = hashlib.sha256()
+    hash_object.update(password.encode('utf-8'))
+    return hash_object.hexdigest()
+
 def delete_table_contents(table_name: str):
     """
     Delete all existing items from a DynamoDB table
@@ -113,10 +150,14 @@ recipient_email = os.getenv('AWS_RECIPIENT_EMAIL')
 sender_email = os.getenv('AWS_SENDER_EMAIL')
 item_uuid = uuid.uuid4()
 item_id = str(item_uuid)
+password = generate_password()
+hashed_password = hash_password(password)
 item = {
     "id": {'S': item_id},
     "subscriber": {'S': recipient_email},
     "sender": {'S': sender_email},
+    "password": {'S': hashed_password},
+    "pawwsord_one_time": {'BOOL' : True},
     "schedule": {'S': ''}
     }
 
@@ -124,3 +165,4 @@ if checks_config['defaults']:
     item['defaults'] = {'S': json.dumps(checks_config['defaults'])}
     
 put_item(settings_table_name, item)
+print(f'One time password added. Use email: {recipient_email} and password: {password} to log in for the first time')
