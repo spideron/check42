@@ -266,11 +266,13 @@ class Mailer:
                     case CheckType.USING_DEFAULT_VPC.value:
                         message = self.compile_simple_message(CheckType.USING_DEFAULT_VPC.value, c['info'])
                     case CheckType.EC2_IN_PUBLIC_SUBNET.value:
-                        message = self.compile_ec2_in_public_subnet_message(c['info'])
+                        message = self.compile_simple_message(CheckType.EC2_IN_PUBLIC_SUBNET.value, c['info'])
                     case CheckType.RESOURCES_IN_OTHER_REGIONS.value:
                         message = self.compile_resources_in_other_regions_message(c['info'])
                     case CheckType.RDS_PUBLIC_ACCESS.value:
                         message = self.compile_simple_message(CheckType.RDS_PUBLIC_ACCESS.value, c['info'])
+                    case CheckType.RDS_IN_PUBLIC_SUBNET.value:
+                        message = self.compile_simple_message(CheckType.RDS_IN_PUBLIC_SUBNET.value, c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -435,30 +437,6 @@ class Mailer:
         return message
     
     
-    def compile_ec2_in_public_subnet_message(self, processed_checks: list) -> Message:
-        """
-        Compile EC2 instances running in public subnet email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.EC2_IN_PUBLIC_SUBNET.value)
-        
-        items = processed_checks
-        
-        item_text_map = {
-            '***REGION***': 'region',
-            '***INSTANCE***': 'instance'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-        
         
     def compile_resources_in_other_regions_message(self, processed_checks: list) -> Message:
         """

@@ -98,71 +98,46 @@ class Basic:
                 result = {
                     'check': c['name'],
                     'pass': True,
-                    'info': ''
+                    'info': []
                 }
                 
+                resources = []
                 match c['name']:
                     case CheckType.MISSING_TAGS.value:
-                        missing_tags = self.check_tags(c)
-                        if len(missing_tags) > 0:
-                            result['pass'] = False
-                            result['info'] = missing_tags
+                        resources = self.check_tags(c)
                     case CheckType.NO_MFA_ON_ROOT.value:
-                        has_mfa = self.has_mfa_on_root()
-                        if not has_mfa:
-                            result['pass'] = False
-                            result['info'] = c['title']
+                        if not self.has_mfa_on_root():
+                            resources = [c['title']]
                     case CheckType.NO_PASSWORD_POLICY.value:
-                        has_password_policy = self.has_password_policy()
-                        if not has_password_policy:
-                            result['pass'] = False
-                            result['info'] = c['title']
+                        if not self.has_password_policy():
+                            resources = [c['title']]
                     case CheckType.PUBLIC_BUCKETS.value:
-                        public_buckets = self.check_s3_public_buckets()
-                        if len(public_buckets) > 0:
-                            result['pass'] = False
-                            result['info'] = public_buckets
+                        resources = self.check_s3_public_buckets()
                     case CheckType.NO_BUSINESS_SUPPORT.value:
-                        has_premium_supprt = self.has_premuim_support()
-                        if not has_premium_supprt:
-                            result['pass'] = False
-                            result['info'] = c['title']
+                        if not self.has_premuim_support():
+                            resources = [c['title']]
                     case CheckType.NO_BUDGET.value:
-                        has_budget = self.has_budget()
-                        if not has_budget:
-                            result['pass'] = False
-                            result['info'] = c['title']
+                        if not self.has_budget():
+                            resources = [c['title']]
                     case CheckType.UNUSED_EIP.value:
-                        unused_eips = self.check_unused_eip(c)
-                        if len(unused_eips) > 0:
-                            result['pass'] = False
-                            result['info'] = unused_eips
+                        resources = self.check_unused_eip(c)
                     case CheckType.UNATTACHED_EBS_VOLUMES.value:
-                        unattached_ebs_volumes = self.check_unattached_ebs_volumes(c)
-                        if len(unattached_ebs_volumes) > 0:
-                            result['pass'] = False
-                            result['info'] = unattached_ebs_volumes
+                        resources = self.check_unattached_ebs_volumes(c)
                     case CheckType.USING_DEFAULT_VPC.value:
-                        default_vpc_resources = self.check_using_default_vpc(c)
-                        if len(default_vpc_resources) > 0:
-                            result['pass'] = False
-                            result['info'] = default_vpc_resources
+                        resources = self.check_using_default_vpc(c)
                     case CheckType.EC2_IN_PUBLIC_SUBNET.value:
-                        ec2_in_public_subnets = self.check_ec2_in_public_subnet(c)
-                        if len(ec2_in_public_subnets) > 0:
-                            result['pass'] = False
-                            result['info'] = ec2_in_public_subnets
+                        resources = self.check_ec2_in_public_subnet(c)
                     case CheckType.RESOURCES_IN_OTHER_REGIONS.value:        
                         resources = self.check_for_resources_in_other_regions(c)
-                        if len(resources) > 0:
-                            result['pass'] = False
-                            result['info'] = resources
                     case CheckType.RDS_PUBLIC_ACCESS.value:        
                         resources = self.check_for_public_rds(c)
-                        if len(resources) > 0:
-                            result['pass'] = False
-                            result['info'] = resources
-                            
+                    case CheckType.RDS_IN_PUBLIC_SUBNET.value:
+                        resources = self.check_for_rds_in_public_subnet(c)
+                
+                if len(resources) > 0:
+                    result['pass'] = False
+                    result['info'] = resources
+                    
                 results.append(result)
                         
         return results
@@ -569,6 +544,42 @@ class Basic:
         return default_vpc_resources
     
     
+    def is_subnet_public(self, subnet_id: str, ec2_client: boto3.client) -> bool:
+        """
+        Check if a subnet is public by verifying if its route table has a route to an Internet Gateway
+        
+        Args:
+            subnet_id (str): The subnet id
+            ec2_client (boto3.client): An initialzied boto3 client for ec2
+        
+        Returns (bool): True if the subnet is public and False otherwise
+        """
+        # Get route tables associated with the subnet
+        response = ec2_client.describe_route_tables(
+            Filters=[{'Name': 'association.subnet-id', 'Values': [subnet_id]}]
+        )
+        
+        route_tables = response.get('RouteTables', [])
+        
+        # If no explicit association, get the main route table for the VPC
+        if not route_tables:
+            subnet_response = ec2_client.describe_subnets(SubnetIds=[subnet_id])
+            vpc_id = subnet_response['Subnets'][0]['VpcId']
+            
+            response = ec2_client.describe_route_tables(
+                Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}, {'Name': 'association.main', 'Values': ['true']}]
+            )
+            route_tables = response.get('RouteTables', [])
+        
+        # Check if any route table has a route to an Internet Gateway
+        for rt in route_tables:
+            for route in rt.get('Routes', []):
+                if route.get('GatewayId', '').startswith('igw-') and route.get('DestinationCidrBlock') == '0.0.0.0/0':
+                    return True
+        
+        return False
+    
+    
     def check_ec2_in_public_subnet(self, check_info: dict) -> list:
         """
         Check for EC2 instances running in public subnets
@@ -591,33 +602,10 @@ class Basic:
                 public_subnets = {}
                 for subnet in subnets_response['Subnets']:
                     subnet_id = subnet['SubnetId']
+                    is_subnet_public = self.is_subnet_public(subnet_id, ec2_client)
                     
-                    # A subnet is public if it has a route to an Internet Gateway
-                    is_public = False
-                    
-                    # Get the route table associated with this subnet
-                    route_tables = ec2_client.describe_route_tables(
-                        Filters=[{'Name': 'association.subnet-id', 'Values': [subnet_id]}]
-                    )
-                    
-                    # If no explicit association, check the main route table for the VPC
-                    if not route_tables['RouteTables']:
-                        vpc_id = subnet['VpcId']
-                        route_tables = ec2_client.describe_route_tables(
-                            Filters=[
-                                {'Name': 'vpc-id', 'Values': [vpc_id]},
-                                {'Name': 'association.main', 'Values': ['true']}
-                            ]
-                        )
-                    
-                    # Check routes for an internet gateway
-                    for rt in route_tables.get('RouteTables', []):
-                        for route in rt.get('Routes', []):
-                            if route.get('GatewayId', '').startswith('igw-'):
-                                is_public = True
-                                break
-                    
-                    public_subnets[subnet_id] = is_public
+                    if is_subnet_public:
+                        public_subnets[subnet_id] = subnet_id
                     
                 # Find instances in public subnets
                 for reservation in instances_response['Reservations']:
@@ -631,7 +619,7 @@ class Basic:
                             
                             instances_in_public_subnets.append({
                                 'region': region,
-                                'instance': f'{instance_name} - {instance_id}'
+                                'resource': f'{instance_name} - {instance_id}'
                             })
         
         except Exception as e:
@@ -746,3 +734,46 @@ class Basic:
             raise(e)
         
         return public_rds_instances
+    
+    
+    def check_for_rds_in_public_subnet(self, check_info: dict) -> list:
+        """
+        Check for RDS instances running in public subnets
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of RDS instances running in a public subnet. Empty list if there are non
+        """
+        rds_instances_in_public_subnets = []
+        regions = self.get_region_list(check_info)
+        
+        try:
+            for region in regions:
+                rds_client = boto3.client('rds', region_name=region)
+                ec2_client = boto3.client('ec2', region_name=region)
+                
+                rds_instances = rds_client.describe_db_instances()
+                
+                for instance in rds_instances['DBInstances']:
+                    rds_id = instance['DBInstanceIdentifier']
+                    rds_engine = instance.get('Engine')
+                    subnet_ids = [subnet['SubnetIdentifier'] for subnet in instance['DBSubnetGroup']['Subnets']]
+                    
+                    is_public = False
+                    for subnet_id in subnet_ids:
+                        if self.is_subnet_public(subnet_id, ec2_client):
+                            is_public = True
+                            break
+                    
+                    if is_public:
+                        rds_instances_in_public_subnets.append({
+                            'region': region,
+                            'resource': f'RDS Id: {rds_id}. Engine: {rds_engine}'
+                        })
+                
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        return rds_instances_in_public_subnets

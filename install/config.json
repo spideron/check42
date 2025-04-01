@@ -238,10 +238,7 @@
                 {
                     "name": "EC2_IN_PUBLIC_SUBNET",
                     "title": "EC2 Running In Public Subnet",
-                    "description": "Check if EC2 instances are running in a public subnet. It is recommended to run resources such as EC2 in private subnet when possible",
-                    "emailTemplates": {
-                        "itemFileName": "basic_ec2_in_public_subnet_item"
-                    }
+                    "description": "Check if EC2 instances are running in a public subnet. It is recommended to run resources such as EC2 in private subnet when possible"
                 },
                 {
                     "name": "RESOURCES_IN_OTHER_REGIONS",
@@ -258,6 +255,11 @@
                     "name": "RDS_PUBLIC_ACCESS",
                     "title": "RDS instance is set for public access",
                     "description": "Check if RDS instance(s) are set for public access. It is recommended to keep RDS instances with private access when possible"
+                },
+                {
+                    "name": "RDS_IN_PUBLIC_SUBNET",
+                    "title": "RDS Running In Public Subnet",
+                    "description": "Check if RDS instances are running in a public subnet. It is recommended to run resources such as RDS in private subnet when possible"
                 }
             ]
         }]

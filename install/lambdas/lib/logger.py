@@ -70,11 +70,14 @@ class Logger:
                                 message += f"Region: {info['region']}. Resource: {info['resource']}\n\n"
                         case CheckType.EC2_IN_PUBLIC_SUBNET.value:
                             for info in processed_check['info']:
-                                message += f"Region: {info['region']}. Instance: {info['instance']}\n\n"
+                                message += f"Region: {info['region']}. Instance: {info['resource']}\n\n"
                         case CheckType.RESOURCES_IN_OTHER_REGIONS.value:
                             for info in processed_check['info']:
                                 message += f"Region: {info['region']}. Service: {info['service']}. Cost: {info['cost']}\n\n"
                         case CheckType.RDS_PUBLIC_ACCESS.value:
+                            for info in processed_check['info']:
+                                message += f"Region: {info['region']}. Resource: {info['resource']}\n\n"
+                        case CheckType.RDS_IN_PUBLIC_SUBNET.value:
                             for info in processed_check['info']:
                                 message += f"Region: {info['region']}. Resource: {info['resource']}\n\n"
                     
