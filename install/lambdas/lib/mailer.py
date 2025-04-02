@@ -260,21 +260,40 @@ class Mailer:
                     case CheckType.NO_BUDGET.value:
                         message = self.compile_simple_message(CheckType.NO_BUDGET.value)
                     case CheckType.UNUSED_EIP.value:
-                        message = self.compile_unused_eips(c['info'])
+                        mapping = {
+                            '***REGION***': 'region',
+                            '***IP_ADDRESS***': 'publicIp'
+                        }
+                        message = self.compile_message_with_mapping(c['check'], c['info'], mapping)
                     case CheckType.UNATTACHED_EBS_VOLUMES.value:
-                        message = self.compile_unattached_ebs_volumes_message(c['info'])
+                        mapping = {
+                            '***REGION***': 'region',
+                            '***VOLUME_ID***': 'volume_id',
+                            '***VOLUME_SIZE***': 'size'
+                        }
+                        message = self.compile_message_with_mapping(c['check'], c['info'], mapping)
                     case CheckType.USING_DEFAULT_VPC.value:
                         message = self.compile_simple_message(CheckType.USING_DEFAULT_VPC.value, c['info'])
                     case CheckType.EC2_IN_PUBLIC_SUBNET.value:
                         message = self.compile_simple_message(CheckType.EC2_IN_PUBLIC_SUBNET.value, c['info'])
                     case CheckType.RESOURCES_IN_OTHER_REGIONS.value:
-                        message = self.compile_resources_in_other_regions_message(c['info'])
+                        mapping = {
+                            '***REGION***': 'region',
+                            '***SERVICE***': 'service',
+                            '***COST***': 'cost'
+                        }
+                        message = self.compile_message_with_mapping(c['check'], c['info'], mapping)
                     case CheckType.RDS_PUBLIC_ACCESS.value:
                         message = self.compile_simple_message(CheckType.RDS_PUBLIC_ACCESS.value, c['info'])
                     case CheckType.RDS_IN_PUBLIC_SUBNET.value:
                         message = self.compile_simple_message(CheckType.RDS_IN_PUBLIC_SUBNET.value, c['info'])
                     case CheckType.HAS_IAM_USRES.value:
-                        message = self.compile_has_iam_users_message(c['info'])
+                        mapping = {
+                            '***USER_NAME***': 'user_name',
+                            '***CREATE_DATE***': 'created_at',
+                            '***LAST_LOGIN***': 'last_login'
+                        }
+                        message = self.compile_message_with_mapping(c['check'], c['info'], mapping)
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -295,7 +314,7 @@ class Mailer:
     
     def compile_simple_message(self, check_type: str, processed_checks = []) -> Message:
         """
-        Compile a simple message where there's no specific string replacement needed
+        Compile a simple message where the default templates and replacement can be used
         
         Args:
             check_type (str): The check type
@@ -324,6 +343,25 @@ class Mailer:
         
         return message
     
+    
+    def compile_message_with_mapping(self, check_type: str, processed_checks: list, mapping: dict) -> Message:
+        """
+        Compile a message with mappings
+        
+        Args:
+            check_type (str): The check type
+            processed_checks (list): Optional - list of items from the checker
+            mapping (dict): A key value map to replace sections in the templates
+            
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        template = self.email_templates.get_template(check_type)
+        
+        message = Message.from_template(template=template, item_text_map=mapping, item_html_map=mapping,
+                                        items=processed_checks)
+        
+        return message
+        
     
     def compile_missing_tags_message(self, required_tags: str, missing_tags_resource: dict) -> Message:
         """
@@ -380,109 +418,6 @@ class Mailer:
         item_text_map = {
             '***BUCKET_NAME***': 'bucket_name',
             '***REASON***': 'reasons'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-        
-    
-    def compile_unused_eips(self, processed_checks: list) -> Message:
-        """
-        Compile unused elastic ips email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.UNUSED_EIP.value)
-        items = processed_checks
-        
-        item_text_map = {
-            '***REGION***': 'region',
-            '***IP_ADDRESS***': 'publicIp'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-    
-    
-    def compile_unattached_ebs_volumes_message(self, processed_checks: list) -> Message:
-        """
-        Compile unattached EBS volumes email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.UNATTACHED_EBS_VOLUMES.value)
-        
-        items = processed_checks
-        
-        item_text_map = {
-            '***REGION***': 'region',
-            '***VOLUME_ID***': 'volume_id',
-            '***VOLUME_SIZE***': 'size'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-    
-    
-        
-    def compile_resources_in_other_regions_message(self, processed_checks: list) -> Message:
-        """
-        Compile resources running in other regions email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.RESOURCES_IN_OTHER_REGIONS.value)
-        
-        items = processed_checks
-        
-        item_text_map = {
-            '***REGION***': 'region',
-            '***SERVICE***': 'service',
-            '***COST***': 'cost'
-        }
-        item_html_map = item_text_map
-        
-        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
-                                        items=items)
-        
-        return message
-    
-    
-    def compile_has_iam_users_message(self, processed_checks: list) -> Message:
-        """
-        Compile has IAM users email section
-        
-        Args:
-            processed_checks(list): A list of items from the checker
-        
-        Returns (Message): A Message object containig the email text and html sections
-        """
-        template = self.email_templates.get_template(CheckType.HAS_IAM_USRES.value)
-        
-        items = processed_checks
-        
-        item_text_map = {
-            '***USER_NAME***': 'user_name',
-            '***CREATE_DATE***': 'created_at',
-            '***LAST_LOGIN***': 'last_login'
         }
         item_html_map = item_text_map
         
