@@ -133,6 +133,8 @@ class Basic:
                         resources = self.check_for_public_rds(c)
                     case CheckType.RDS_IN_PUBLIC_SUBNET.value:
                         resources = self.check_for_rds_in_public_subnet(c)
+                    case CheckType.HAS_IAM_USRES.value:
+                        resources = self.check_has_iam_users(c)
                 
                 if len(resources) > 0:
                     result['pass'] = False
@@ -777,3 +779,41 @@ class Basic:
             raise(e)
         
         return rds_instances_in_public_subnets
+    
+    
+    def check_has_iam_users(self, check_info: dict) -> list:
+        """
+        Check if the account has IAM users
+        
+        Args:
+            check_info (dict): A check information
+        
+        Returns (list): A list of IAM users details. Empty list if there are non
+        """
+        
+        iam_users = []
+        
+        try:
+            iam_client = boto3.client('iam')
+            response = iam_client.list_users()
+            users = response.get('Users', [])
+            
+            for user in users:
+                last_login_date = user.get('PasswordLastUsed', None)
+                if not last_login_date:
+                    last_login_date = 'N/A'
+                else:
+                    last_login_date = last_login_date.strftime('%Y-%m-%d')
+                
+                iam_users.append({
+                    'user_name': user['UserName'],
+                    'created_at': user['CreateDate'].strftime('%Y-%m-%d'),
+                    'last_login': last_login_date
+                })
+            
+        except Exception as e:
+            print(f"Error checking region {str(e)}")
+            raise(e)
+        
+        
+        return iam_users

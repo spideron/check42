@@ -127,6 +127,7 @@
                             "elasticloadbalancing:DescribeLoadBalancers",
                             "iam:GetAccountPasswordPolicy",
                             "iam:GetAccountSummary",
+                            "iam:ListUsers",
                             "tag:GetResources",
                             "ce:GetCostAndUsage"
                         ],
@@ -260,6 +261,14 @@
                     "name": "RDS_IN_PUBLIC_SUBNET",
                     "title": "RDS Running In Public Subnet",
                     "description": "Check if RDS instances are running in a public subnet. It is recommended to run resources such as RDS in private subnet when possible"
+                },
+                {
+                    "name": "HAS_IAM_USRES",
+                    "title": "The Account Has IAM Users",
+                    "description": "Check if the account has IAM users. It is recommended to use IAM Identity Center for users management instead of account bound IAM users",
+                    "emailTemplates": {
+                        "itemFileName": "basic_has_iam_users_item"
+                    }
                 }
             ]
         }]

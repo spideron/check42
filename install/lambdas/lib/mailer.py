@@ -273,6 +273,8 @@ class Mailer:
                         message = self.compile_simple_message(CheckType.RDS_PUBLIC_ACCESS.value, c['info'])
                     case CheckType.RDS_IN_PUBLIC_SUBNET.value:
                         message = self.compile_simple_message(CheckType.RDS_IN_PUBLIC_SUBNET.value, c['info'])
+                    case CheckType.HAS_IAM_USRES.value:
+                        message = self.compile_has_iam_users_message(c['info'])
                 
                 if message is not None:
                     findings_text += message.message_text
@@ -462,4 +464,29 @@ class Mailer:
                                         items=items)
         
         return message
+    
+    
+    def compile_has_iam_users_message(self, processed_checks: list) -> Message:
+        """
+        Compile has IAM users email section
         
+        Args:
+            processed_checks(list): A list of items from the checker
+        
+        Returns (Message): A Message object containig the email text and html sections
+        """
+        template = self.email_templates.get_template(CheckType.HAS_IAM_USRES.value)
+        
+        items = processed_checks
+        
+        item_text_map = {
+            '***USER_NAME***': 'user_name',
+            '***CREATE_DATE***': 'created_at',
+            '***LAST_LOGIN***': 'last_login'
+        }
+        item_html_map = item_text_map
+        
+        message = Message.from_template(template=template, item_text_map=item_text_map, item_html_map=item_html_map,
+                                        items=items)
+        
+        return message

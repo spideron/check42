@@ -80,6 +80,9 @@ class Logger:
                         case CheckType.RDS_IN_PUBLIC_SUBNET.value:
                             for info in processed_check['info']:
                                 message += f"Region: {info['region']}. Resource: {info['resource']}\n\n"
+                        case CheckType.HAS_IAM_USRES.value:
+                            for info in processed_check['info']:
+                                message += f"User: {info['user_name']}. created at: {info['created_at']}. last login: {info['last_login']}\n\n"
                     
                     item_uuid = uuid.uuid4()
                     item_id = str(item_uuid)
