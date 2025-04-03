@@ -27,7 +27,7 @@ security and operational practices. The solution runs on a schedule and emails t
 
 3. Navigate to the install directory:
    ```bash
-   cd aws-best-practice-checks/install
+   cd check42/install
    ```
 
 4. Make the install script executable:
