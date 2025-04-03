@@ -55,7 +55,6 @@ def update_rule(schedule=None):
             
         # Update the rule
         response = eventbridge.put_rule(**update_params)
-        
         rule_details['message'] = {
             'Name': response.get('Name'),
             'Arn': response.get('Arn'),
@@ -90,9 +89,9 @@ def handler(event, context):
             request_body = event['body']
             schedule = json.loads(request_body)["frequency"]
             if schedule == 'daily':
-                schedule_expression = "0 0 * * ? *"
+                schedule_expression = "cron(0 0 * * ? *)"
             elif schedule == 'weekly':
-                schedule_expression = "0 0 * * ? 0"
+                schedule_expression = "cron(0 0 * * ? 0)"
             else:
                 status_code = 400
                 error = "Unknown {0} schedule. Expecting daily or weekly".format(schedule)
