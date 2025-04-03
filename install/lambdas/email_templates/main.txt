@@ -1,4 +1,4 @@
-AWS Best Practices Checks
-This is a summary of the AWS Best Practices Checks findings
+Check42
+This is a summary of the Chceck42 findings
 
 ***FINDINGS***

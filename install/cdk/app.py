@@ -28,6 +28,7 @@ install_config_file = open(cwd + '/../config.json')
 install_config = json.load(install_config_file)
 app_utils = AppUtils(install_config)
 app_tags = install_config['tags']
+stack_prefix_format = '{}{}'
 
 install_config['region'] = region
 install_config['account'] = account
@@ -43,19 +44,19 @@ app = cdk.App()
 for t in app_tags:
     cdk.Tags.of(app).add(key=t['Key'], value=t['Value'])
 
-ddb_stack_name = app_utils.get_name_with_prefix('DDBStack')
+ddb_stack_name = app_utils.get_name_with_prefix('DDBStack', stack_prefix_format)
 DDBStack(app, ddb_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
 
-lambda_stack_name = app_utils.get_name_with_prefix('LambdaStack')
+lambda_stack_name = app_utils.get_name_with_prefix('LambdaStack', stack_prefix_format)
 lambda_stack = LambdaStack(app, lambda_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
 
-events_stack_name = app_utils.get_name_with_prefix('EventsStack')
+events_stack_name = app_utils.get_name_with_prefix('EventsStack', stack_prefix_format)
 events_stack = EventsStack(app, events_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
@@ -67,7 +68,7 @@ events_stack.create_lambda_event(
     install_config['schedule']
 )
 
-ses_stack_name = app_utils.get_name_with_prefix('SESSTack')
+ses_stack_name = app_utils.get_name_with_prefix('SESSTack', stack_prefix_format)
 ses_stack = SESStack(app, ses_stack_name,
     env=cdk.Environment(account=account, region=region)
 )

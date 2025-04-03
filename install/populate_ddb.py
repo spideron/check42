@@ -89,8 +89,6 @@ def delete_table_contents(table_name: str):
             key = {key['AttributeName']: item[key['AttributeName']] for key in key_schema}
             batch.delete_item(Key=key)
     
-    print(f"Successfully deleted all items from the table '{table_name}'")
-
 
 def put_item(table_name, item):
     """
@@ -104,7 +102,6 @@ def put_item(table_name, item):
         TableName=table_name,
         Item=item
     )
-    print('Item {} added to table {}'.format(item['id']['S'], table_name))
 
     
 checks_table_name = get_name_with_prefix('checks')
@@ -115,6 +112,7 @@ delete_table_contents(checks_table_name)
 delete_table_contents(settings_table_name)
 
 # Populate the checks table
+items_added = 0
 for m in checks_config['modules']:
     item_module = m['name']
     item_version = m['version']
@@ -144,6 +142,10 @@ for m in checks_config['modules']:
             item['email_templates'] = {'S': json.dumps(c['emailTemplates'])}
         
         put_item(checks_table_name, item)
+        items_added += 1
+
+print(f'Added {items_added} checks to the checks table')
+        
 
 # Populate the settings table
 recipient_email = os.getenv('AWS_RECIPIENT_EMAIL')

@@ -1,12 +1,12 @@
 {
-    "prefix": "aws_best_practices",
+    "prefix": "check42",
     "tags": [{
             "Key": "environment",
             "Value": "monitoring"
         },
         {
             "Key": "project",
-            "Value": "aws-best-practices-checks"
+            "Value": "check42"
         }
     ],
     "dynamodb": {
