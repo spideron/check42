@@ -4,7 +4,7 @@ import re
 from botocore.exceptions import ClientError
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('aws_best_practices_checks')
+table = dynamodb.Table('check42_checks')
 
 def is_valid_uuid(uuid_string):
     regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
@@ -18,12 +18,6 @@ def get_checks():
     Returns (list): List of check items. None in case of an error
     """
     try:
-        # Create a DynamoDB resource
-        dynamodb = boto3.resource('dynamodb')
-        
-        # Get the table
-        table = dynamodb.Table('aws_best_practices_checks')
-        
         # Perform a simple scan
         response = table.scan()
         
@@ -118,7 +112,7 @@ def handler(event, context):
             validation_errors = validate_checks(checks)
             if len(validation_errors) > 0:
                 status_code = 400
-                errors = validation_erros
+                errors = validation_errors
             else:
                 if not update_checks(checks):
                     status_code = 500

@@ -15,7 +15,7 @@ def get_checks():
     """
     try:
         dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table('aws_best_practices_checks')
+        table = dynamodb.Table('check42_checks')
         response = table.scan()
         
         # Get the items from the response
@@ -44,7 +44,7 @@ def get_settings() -> Settings:
         
     try:
         dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table('aws_best_practices_settings')
+        table = dynamodb.Table('check42_settings')
         
         # Scan the table and limit to 1 item
         response = table.scan(
@@ -79,7 +79,7 @@ def run_checks() -> None:
             results.extend(basic_checks_results)
     
     # Log the results
-    logs_table_name = 'aws_best_practices_log'
+    logs_table_name = 'check42_log'
     logger = Logger(logs_table_name, checks)
     logger.log_checks(results)
     

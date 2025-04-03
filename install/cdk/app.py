@@ -42,28 +42,33 @@ app = cdk.App()
 # Add tags in the app level
 for t in app_tags:
     cdk.Tags.of(app).add(key=t['Key'], value=t['Value'])
-    
-DDBStack(app, "DDBStack",
+
+ddb_stack_name = app_utils.get_name_with_prefix('DDBStack')
+DDBStack(app, ddb_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
 
-lambda_stack = LambdaStack(app, "LambdaStack",
+lambda_stack_name = app_utils.get_name_with_prefix('LambdaStack')
+lambda_stack = LambdaStack(app, lambda_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
 
-events_stack = EventsStack(app, "EventsStack",
+events_stack_name = app_utils.get_name_with_prefix('EventsStack')
+events_stack = EventsStack(app, events_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
+
 checks_function_name = app_utils.get_name_with_prefix(install_config['lambda']['functions']['run']['functionName'])
 events_stack.create_lambda_event(
     lambda_stack.lambda_functions[checks_function_name],
     install_config['schedule']
 )
 
-ses_stack = SESStack(app, "SESSTack",
+ses_stack_name = app_utils.get_name_with_prefix('SESSTack')
+ses_stack = SESStack(app, ses_stack_name,
     env=cdk.Environment(account=account, region=region)
 )
 ses_stack.create_ses_email_identity(sender_email)

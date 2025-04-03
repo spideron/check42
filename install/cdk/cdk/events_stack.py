@@ -44,10 +44,10 @@ class EventsStack(Stack):
         # Create EventBridge Rule with daily schedule
         rule = events.Rule(
             self,
-            "BestPracticesCheck",
+            "Check42Check",
             rule_name = rule_name,
             schedule=schedule,
-            description="Triggers AWS Best Practices checks schedule"
+            description=schedule_config['description']
         )
 
         # Add Lambda function as target

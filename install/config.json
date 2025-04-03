@@ -12,9 +12,6 @@
     "dynamodb": {
         "tables": ["checks", "settings", "log"]
     },
-    "iam": {
-        "configRoleName": "config_role"
-    },
     "lambda": {
         "defaults": {
             "memory": 128,
@@ -24,7 +21,7 @@
         "functions": {
             "settings": {
                 "functionName": "settings",
-                "fileLocation": "lambdas/aws_best_practices_settings.py",
+                "fileLocation": "lambdas/check42_settings.py",
                 "iamPolicies": [{
                         "name": "dynamodb_access",
                         "actions": [
@@ -53,7 +50,7 @@
             },
             "checks": {
                 "functionName": "checks",
-                "fileLocation": "lambdas/aws_best_practices_checks.py",
+                "fileLocation": "lambdas/check42_checks.py",
                 "iamPolicies": [{
                     "name": "dynamodb_access",
                     "actions": [
@@ -74,7 +71,7 @@
             "run": {
                 "timeout": 60,
                 "functionName": "run",
-                "fileLocation": "lambdas/aws_best_practices_run.py",
+                "fileLocation": "lambdas/check42_run.py",
                 "includeFolders": ["email_templates"],
                 "iamPolicies": [{
                         "name": "dynamodb_access",
@@ -137,7 +134,7 @@
             },
             "schedule": {
                 "functionName": "schedule",
-                "fileLocation": "lambdas/aws_best_practices_schedule.py"
+                "fileLocation": "lambdas/check42_schedule.py"
             }
         }
     },
@@ -149,6 +146,7 @@
     },
     "schedule": {
         "ruleNmae": "schedule",
+        "description": "Triggers check42 checks schedule",
         "defaultSchedule": {
             "minute": "0",
             "hour": "0",
@@ -206,7 +204,7 @@
                     }
                 },
                 {
-                    "name": "NO_BUSINESS_SUPPORT",
+                    "name": "NO_PREMIUM_SUPPORT",
                     "title": "No Premium Support",
                     "description": "Check if the account is enrolled in premium support (business, enterprise, or enterprise on-ramp). It is recommended to enroll in premium support for any account with workloads in production"
                 },

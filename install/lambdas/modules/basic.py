@@ -113,7 +113,7 @@ class Basic:
                             resources = [c['title']]
                     case CheckType.PUBLIC_BUCKETS.value:
                         resources = self.check_s3_public_buckets()
-                    case CheckType.NO_BUSINESS_SUPPORT.value:
+                    case CheckType.NO_PREMIUM_SUPPORT.value:
                         if not self.has_premuim_support():
                             resources = [c['title']]
                     case CheckType.NO_BUDGET.value:

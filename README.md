@@ -1,13 +1,12 @@
-# AWS Best Practices Checker
+# Check42
 
-This repository provides an automated solution that periodically checks your AWS 
-account against best practices and sends the findings via email.
+This repository provides an automated solution that periodically checks your AWS account against best practices and 
+sends the findings via email.
 
 ## Overview
 
-The AWS Best Practices Checker performs regular audits of your AWS account configuration 
-to ensure compliance with recommended security and operational practices. The solution runs 
-on a schedule and emails the results to specified recipients.
+The Check42 solution performs regular audits of your AWS account configuration to ensure compliance with recommended 
+security and operational practices. The solution runs on a schedule and emails the results to specified recipients.
 
 ## Installation
 
@@ -23,7 +22,7 @@ on a schedule and emails the results to specified recipients.
 
 2. Clone this repository:
    ```bash
-   git clone https://github.com/spideron/aws-best-practice-checks
+   git clone https://github.com/spideron/check42
    ```
 
 3. Navigate to the install directory:
@@ -62,7 +61,7 @@ email to complete the installation.
 
 ## Usage
 
-The AWS Best Practices Checker will run automatically at 12:00 AM UTC every day.
+The Check42 solution will run automatically at 12:00 AM UTC every day.
 
 ### Manual Testing
 
@@ -70,7 +69,7 @@ To manually test the solution:
 
 1. Log in to the AWS Console
 2. Navigate to AWS Lambda
-3. Find and select the `aws_best_practices_run` Lambda function
+3. Find and select the `check42_run` Lambda function
 4. Click the "Test" tab
 5. Create a new test event with an empty JSON object `{}`
 6. Click "Test" to run the function

@@ -255,8 +255,8 @@ class Mailer:
                         message = self.compile_simple_message(CheckType.NO_PASSWORD_POLICY.value)
                     case CheckType.PUBLIC_BUCKETS.value:
                         message = self.compile_s3_public_buckets_access(c['info'])
-                    case CheckType.NO_BUSINESS_SUPPORT.value:
-                        message = self.compile_simple_message(CheckType.NO_BUSINESS_SUPPORT.value)
+                    case CheckType.NO_PREMIUM_SUPPORT.value:
+                        message = self.compile_simple_message(CheckType.NO_PREMIUM_SUPPORT.value)
                     case CheckType.NO_BUDGET.value:
                         message = self.compile_simple_message(CheckType.NO_BUDGET.value)
                     case CheckType.UNUSED_EIP.value:

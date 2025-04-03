@@ -6,7 +6,7 @@ from botocore.exceptions import ClientError
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('aws_best_practices_settings')
+table = dynamodb.Table('check42_settings')
 
 def is_valid_uuid(uuid_string: str) -> bool:
     """
