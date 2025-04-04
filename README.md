@@ -35,9 +35,9 @@ security and operational practices. The solution runs on a schedule and emails t
    chmod +x install.sh
    ```
 
-5. Edit the install script to update required environment variables:
+5. Edit the install configuration to update required environment variables:
    ```bash
-   nano install.sh
+   nano install.conf
    ```
 
 6. Update the following environment variables in the file:
@@ -87,3 +87,53 @@ the function completes execution.
 ## Configuration
 
 Check the [configuration doc](docs/config.md)
+
+
+## Uninstall
+
+### Prerequisites
+
+- An AWS account
+- Access to AWS Cloud Shell
+- Permissions to AWS resources (Lambda, EventBridge, SES, etc.)
+
+### Un-installation Steps
+
+1. Open AWS Cloud Shell in your AWS account
+
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/spideron/check42
+   ```
+
+3. Navigate to the install directory:
+   ```bash
+   cd check42/install
+   ```
+
+4. Make the uninstall script executable:
+   ```bash
+   chmod +x uninstall.sh
+   ```
+
+5. Edit the install configuration to update required environment variables:
+   ```bash
+   nano install.conf
+   ```
+
+6. Update the following environment variables in the file:
+   ```bash
+   export AWS_DEFAULT_REGION=''      # e.g., 'us-east-1'
+   export AWS_DEFAULT_ACCOUNT=''     # Your AWS account ID
+   export AWS_SENDER_EMAIL=''        # Email address that will send reports
+   export AWS_RECIPIENT_EMAIL=''     # Email address that will receive reports
+   ```
+
+7. Save the file (in nano: Ctrl+O, then Enter, then Ctrl+X)
+
+8. Run the un-installation script:
+   ```bash
+   ./uninstall.sh
+   ```
+
+9. You'll be asked to delete the stacks created by the install process. Press Y and Enter to begin the uninstallation

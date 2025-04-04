@@ -1,7 +1,6 @@
 #!/bin/sh
 
-export AWS_DEFAULT_REGION=''
-export AWS_DEFAULT_ACCOUNT=''
+source ./install.conf
 
 cd cdk
 

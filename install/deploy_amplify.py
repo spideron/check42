@@ -1,20 +1,34 @@
 #!/usr/bin/env python3
-import boto3
+import json
 import os
 import zipfile
 import argparse
 import tempfile
 import shutil
+from lib.install_utils import InstallUtils
 
-app_id = os.getenv('AWS_AMPLIFY_APP_ID')
-bucket_name = os.getenv('AWS_AMPLIFY_S3_BUCKET')
-api_url = os.getenv('AWS_API_URL')
+region = os.getenv('AWS_DEFAULT_REGION')
+account = os.getenv('AWS_DEFAULT_ACCOUNT')
+cwd = os.getcwd()
+install_config_file = open(cwd + '/config.json')
+install_config = json.load(install_config_file)
+install_utils = InstallUtils(install_config)
+
 branch_name= 'main'
-
 website_dir = './frontend'
 temp_folder = 'temp'
 js_file_name = 'index.js'
 zip_file_name = 'website-deploy.zip'
+
+amplify_stack_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['amplifyStackNameKey'])
+amplify_web_url =  install_utils.get_cloud_formation_output(amplify_stack_name, ['url'])
+amplify_app_id = amplify_web_url.split('.')[1]
+
+api_stack_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['apiStackNameKey'])
+api_url =  install_utils.get_cloud_formation_output(amplify_stack_name, ['url', 'endpoint', 'uri', 'api'])
+
+amplify_bucket_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['amplifyS3BucketName'])
+
 
 # Remove the temp folder if it exists
 if os.path.exists(temp_folder):
@@ -42,15 +56,5 @@ with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             zipf.write(file_path, arcname)
 
 
-# Upload the zip file to the Amplify deployment bucket
-s3_client = boto3.client('s3')
-object_name = os.path.basename(zip_path)
-s3_client.upload_file(zip_path, bucket_name, object_name)
-
 # Deploy to Amplify
-amplify = boto3.client('amplify')
-amplify.start_deployment(
-        appId=app_id,
-        branchName=branch_name,
-        sourceUrl=f's3://{bucket_name}/{object_name}'
-    )
+install_utils.amplify_deploy(amplify_app_id, zip_path, amplify_bucket_name)

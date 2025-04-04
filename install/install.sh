@@ -1,10 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-# Add the region, account ID, sender, and recipient emails
-export AWS_DEFAULT_REGION=''
-export AWS_DEFAULT_ACCOUNT=''
-export AWS_SENDER_EMAIL=''
-export AWS_RECIPIENT_EMAIL=''
+source ./install.conf
 
 # Change to the cdk directory
 cd cdk

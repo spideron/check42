@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import subprocess
 import json
 import aws_cdk as cdk
 import botocore.session
@@ -35,7 +36,7 @@ stack_prefix_format = '{}{}'
 
 install_config['region'] = region
 install_config['account'] = account
-
+export_environment_variables = {}
 
 # If the sender email is set as an environment variable, override the config sections
 if sender_email is not None:
@@ -65,7 +66,8 @@ api_stack = ApiStack(app, api_stack_name,
     config=install_config,
     lambda_functions=lambda_stack.lambda_functions
 )
-os.environ['AWS_API_URL'] = api_stack.api.url
+api_stack_name_key = install_config['deploymentExports']['apiStackNameKey']
+export_environment_variables[api_stack_name_key] = api_stack_name
 
 events_stack_name = app_utils.get_name_with_prefix('EventsStack', stack_prefix_format)
 events_stack = EventsStack(app, events_stack_name,
@@ -91,7 +93,8 @@ s3_stack = S3Stack(app, s3_stack_name,
     config=install_config
 )
 amplify_bucket_name = s3_stack.create_amplify_deployment_bucket()
-os.environ['AWS_AMPLIFY_S3_BUCKET'] = amplify_bucket_name
+amplify_bucket_name_key = install_config['deploymentExports']['amplifyS3BucketName']
+export_environment_variables[amplify_bucket_name_key] = amplify_bucket_name
 
 amplify_stack_name = app_utils.get_name_with_prefix('AmplifyStack', stack_prefix_format)
 amplify_stack = StaticAmplifyHostingStack(app, amplify_stack_name,
@@ -99,7 +102,12 @@ amplify_stack = StaticAmplifyHostingStack(app, amplify_stack_name,
     config=install_config
 )
 amplify_info = amplify_stack.create_amplify_static_webapp(amplify_bucket_name)
-os.environ['AWS_AMPLIFY_URL'] = amplify_info['url']
-os.environ['AWS_AMPLIFY_APP_ID'] = amplify_info['app_id']
+amplify_stack_name_key = install_config['deploymentExports']['amplifyStackNameKey']
+export_environment_variables[amplify_stack_name_key] = amplify_stack_name
+
+export_variables = json.dumps(export_environment_variables)
+exports_file_path = install_config['deploymentExports']['tempFileName']
+with open(exports_file_path, 'w') as ofile:
+    ofile.write(export_variables)
 
 app.synth()

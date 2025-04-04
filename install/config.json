@@ -1,5 +1,11 @@
 {
     "prefix": "check42",
+    "deploymentExports": {
+        "tempFileName": "/tmp/cdk_exports.json",
+        "amplifyStackNameKey": "AWS_AMPLIFY_STACK",
+        "amplifyS3BucketName": "AWS_AMPLIFY_S3_BUCKET",
+        "apiStackNameKey": "AWS_API_STACK"
+    },
     "tags": [{
             "Key": "environment",
             "Value": "monitoring"
@@ -142,7 +148,7 @@
         "name": "api",
         "description": "A Restful API to manage the checker configuration",
         "resources": {
-            "settings":{
+            "settings": {
                 "lambda_function": "settings",
                 "methods": ["GET", "PUT"]
             },
@@ -169,6 +175,7 @@
     "amplify": {
         "websiteName": "management_site",
         "description": "Static website hosted on AWS Amplify to manage the settings",
+        "branch": "main",
         "iamPolicies": [{
                 "name": "amplify_s3_access",
                 "actions": [

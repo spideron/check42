@@ -83,9 +83,9 @@ class StaticAmplifyHostingStack(Stack):
         # Create a branch for manual deployments
         branch = amplify.CfnBranch(
             self,
-            "MainBranch",
+            self.config['amplify']['branch'],
             app_id=amplify_app.attr_app_id,
-            branch_name="main",
+            branch_name=self.config['amplify']['branch'],
             enable_auto_build=False
         )
 
