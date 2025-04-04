@@ -25,7 +25,7 @@ amplify_web_url =  install_utils.get_cloud_formation_output(amplify_stack_name, 
 amplify_app_id = amplify_web_url.split('.')[1]
 
 api_stack_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['apiStackNameKey'])
-api_url =  install_utils.get_cloud_formation_output(amplify_stack_name, ['url', 'endpoint', 'uri', 'api'])
+api_url =  install_utils.get_cloud_formation_output(api_stack_name, ['url', 'endpoint', 'uri', 'api'])
 
 amplify_bucket_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['amplifyS3BucketName'])
 
