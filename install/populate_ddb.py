@@ -14,6 +14,7 @@ cwd = os.getcwd()
 install_config_file = open(cwd + '/config.json')
 install_config = json.load(install_config_file)
 checks_config = install_config['checks']
+amplify_web_url =  os.getenv('AWS_AMPLIFY_URL')
 
 # Helper method to get a name with prefix from the config
 def get_name_with_prefix(name: str):
@@ -167,4 +168,4 @@ if checks_config['defaults']:
     item['defaults'] = {'S': json.dumps(checks_config['defaults'])}
     
 put_item(settings_table_name, item)
-print(f'One time password added. Use email: {recipient_email} and password: {password} to log in for the first time')
+print(f'The configuration url can be found at {amplify_web_url}. Use email: {recipient_email} and password: {password} to log in')

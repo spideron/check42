@@ -25,3 +25,6 @@ cd ..
 
 # Populate the DynamoDB tables
 python populate_ddb.py
+
+# Deploy the Amplify App
+python deploy_amplify.py 

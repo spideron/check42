@@ -2,7 +2,7 @@ class ChecklistApp {
     constructor() {
         this.container = document.getElementById('checklist-container');
         this.items = [];
-        this.apiUrl = 'https://wzsafknftc.execute-api.us-east-1.amazonaws.com/prod';
+        this.apiUrl = '***API_URL***';
         this.init();
     }
 

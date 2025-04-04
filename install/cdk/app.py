@@ -8,6 +8,8 @@ from cdk.ddb_stack import DDBStack
 from cdk.lambda_stack import LambdaStack
 from cdk.events_stack import EventsStack
 from cdk.ses_stack import SESStack
+from cdk.s3_stack import S3Stack
+from cdk.amplify_stack import StaticAmplifyHostingStack
 from cdk.app_utils import AppUtils
 
 region = os.getenv('AWS_DEFAULT_REGION')
@@ -74,5 +76,21 @@ ses_stack = SESStack(app, ses_stack_name,
 )
 ses_stack.create_ses_email_identity(sender_email)
 
+s3_stack_name = app_utils.get_name_with_prefix('S3Stack', stack_prefix_format)
+s3_stack = S3Stack(app, s3_stack_name,
+    env=cdk.Environment(account=account, region=region),
+    config=install_config
+)
+amplify_bucket_name = s3_stack.create_amplify_deployment_bucket()
+os.environ['AWS_AMPLIFY_S3_BUCKET'] = amplify_bucket_name
+
+amplify_stack_name = app_utils.get_name_with_prefix('AmplifyStack', stack_prefix_format)
+amplify_stack = StaticAmplifyHostingStack(app, amplify_stack_name,
+    env=cdk.Environment(account=account, region=region),
+    config=install_config
+)
+amplify_info = amplify_stack.create_amplify_static_webapp(amplify_bucket_name)
+os.environ['AWS_AMPLIFY_URL'] = amplify_info['url']
+os.environ['AWS_AMPLIFY_APP_ID'] = amplify_info['app_id']
 
 app.synth()
