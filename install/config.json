@@ -139,7 +139,26 @@
         }
     },
     "api": {
-
+        "name": "api",
+        "description": "A Restful API to manage the checker configuration",
+        "resources": {
+            "settings":{
+                "lambda_function": "settings",
+                "methods": ["GET", "PUT"]
+            },
+            "checks": {
+                "lambda_function": "checks",
+                "methods": ["GET", "PUT"]
+            },
+            "schedule": {
+                "lambda_function": "schedule",
+                "methods": ["GET", "PUT"]
+            },
+            "run": {
+                "lambda_function": "run",
+                "methods": ["GET"]
+            }
+        }
     },
     "s3": {
         "amplifyDeploymentBucket": {

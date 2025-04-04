@@ -6,6 +6,7 @@ import aws_cdk as cdk
 import botocore.session
 from cdk.ddb_stack import DDBStack
 from cdk.lambda_stack import LambdaStack
+from cdk.api_stack import ApiStack
 from cdk.events_stack import EventsStack
 from cdk.ses_stack import SESStack
 from cdk.s3_stack import S3Stack
@@ -58,15 +59,23 @@ lambda_stack = LambdaStack(app, lambda_stack_name,
     config=install_config
 )
 
+api_stack_name = app_utils.get_name_with_prefix('ApiStack', stack_prefix_format)
+api_stack = ApiStack(app, api_stack_name,
+    env=cdk.Environment(account=account, region=region),
+    config=install_config,
+    lambda_functions=lambda_stack.lambda_functions
+)
+os.environ['AWS_API_URL'] = api_stack.api.url
+
 events_stack_name = app_utils.get_name_with_prefix('EventsStack', stack_prefix_format)
 events_stack = EventsStack(app, events_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
 
-checks_function_name = app_utils.get_name_with_prefix(install_config['lambda']['functions']['run']['functionName'])
+run_function_name = install_config['lambda']['functions']['run']['functionName']
 events_stack.create_lambda_event(
-    lambda_stack.lambda_functions[checks_function_name],
+    lambda_stack.lambda_functions[run_function_name],
     install_config['schedule']
 )
 

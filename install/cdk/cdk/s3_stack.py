@@ -2,6 +2,7 @@ import os
 import shutil
 from aws_cdk import (
     aws_s3 as s3,
+    RemovalPolicy,
     aws_s3_deployment as s3deploy,
     Stack,
     aws_iam as iam,
@@ -31,6 +32,7 @@ class S3Stack(Stack):
             self,
             bucket_name,
             bucket_name=bucket_name,
+            removal_policy=RemovalPolicy.DESTROY,
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL
         )
 

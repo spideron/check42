@@ -28,15 +28,18 @@ class LambdaStack(Stack):
         self.app_utils = AppUtils(config)
         
         for f_name in config['lambda']['functions']:
-            self.create_lambda_function(config['lambda']['functions'][f_name])
+            lambda_function = self.create_lambda_function(config['lambda']['functions'][f_name])
+            self.lambda_functions[f_name] = lambda_function
         
 
-    def create_lambda_function(self, function_conf: dict) -> None:
+    def create_lambda_function(self, function_conf: dict) -> _lambda.Function:
         """
         Create a Lambda function resource
         
         Args:
             function_conf (dict): A Lambda configuration section
+        
+        Returns (_lambda.Function): A Lambda Function resource
         """
         function_file_location = function_conf['fileLocation']
         function_name = self.app_utils.get_name_with_prefix(function_conf['functionName'])
@@ -83,8 +86,7 @@ class LambdaStack(Stack):
             role=lambda_role
         )
         
-        self.lambda_functions[function_name] = lambda_function
-
+        return lambda_function
 
     
 

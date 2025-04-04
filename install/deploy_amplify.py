@@ -6,11 +6,9 @@ import argparse
 import tempfile
 import shutil
 
-#app_id = os.getenv('AWS_AMPLIFY_APP_ID')
-app_id = 'd2x7zyxq6oysq0'
-#bucket_name = os.getenv('AWS_AMPLIFY_S3_BUCKET')
-bucket_name = 'check42-amplify-deploy-549173009724-us-west-2'
-api_url = 'https://wzsafknftc.execute-api.us-east-1.amazonaws.com/prod' #TODO: Get from os env
+app_id = os.getenv('AWS_AMPLIFY_APP_ID')
+bucket_name = os.getenv('AWS_AMPLIFY_S3_BUCKET')
+api_url = os.getenv('AWS_API_URL')
 branch_name= 'main'
 
 website_dir = './frontend'
