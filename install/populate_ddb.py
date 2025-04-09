@@ -67,7 +67,7 @@ item = {
     "subscriber": {'S': recipient_email},
     "sender": {'S': sender_email},
     "password": {'S': hashed_password},
-    "pawwsord_one_time": {'BOOL' : True},
+    "session_token": {'S' : ''},
     "schedule": {'S': ''}
     }
 
