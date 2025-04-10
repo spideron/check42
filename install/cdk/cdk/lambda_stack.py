@@ -11,7 +11,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 from cdk.app_utils import AppUtils
-
+from cdk.lambda_utils import Lambdatils
 
 class LambdaStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, config: dict, **kwargs) -> None:
@@ -20,12 +20,14 @@ class LambdaStack(Stack):
         """
         super().__init__(scope, construct_id, **kwargs)
         
+        self.lambda_utils = Lambdatils(config['prefix'])
+        self.app_utils = AppUtils(config)
+        
         self.config = config
         self.lambda_functions = {}
         self.lambda_default_memory = config['lambda']['defaults']['memory']
         self.lambda_default_timeout = config['lambda']['defaults']['timeout']
         self.include_folders = config['lambda']['includeFolders']
-        self.app_utils = AppUtils(config)
         
         for f_name in config['lambda']['functions']:
             lambda_function = self.create_lambda_function(config['lambda']['functions'][f_name])
@@ -69,8 +71,11 @@ class LambdaStack(Stack):
             function_policies = function_conf['iamPolicies']
         
         # Create deployment package for the log item function
-        self.create_deployment_package(function_name, function_file_location, include_folders, function_dependencies)
-        lambda_role = self.create_lambda_iam_role(f'{function_name}_role', function_policies)
+        file_name = self.app_utils.deployment_name(function_name)
+        self.lambda_utils.create_deployment_package(file_name, function_file_location, include_folders, function_dependencies)
+        
+        role_name = self.lambda_utils.role_name(function_name)
+        lambda_role = self.create_lambda_iam_role(role_name, function_policies)
         
         # Create Lambda function
         lambda_function = _lambda.Function(
@@ -79,7 +84,7 @@ class LambdaStack(Stack):
             function_name = function_name,
             runtime=_lambda.Runtime.PYTHON_3_10,
             handler=f'{function_name}.handler',
-            code=_lambda.Code.from_asset(self.app_utils.deployment_name(function_name)),
+            code=_lambda.Code.from_asset(file_name),
             timeout=Duration.seconds(function_timeout),
             memory_size=function_memory,
             environment = function_environment,
@@ -133,49 +138,3 @@ class LambdaStack(Stack):
             lambda_role.add_managed_policy(policy)
         
         return lambda_role
-
-    def create_deployment_package(self, lambda_name: str, file_location: str, include_folders: list, dependencies=[]):
-        """
-        Create a Lambda Function deployment package
-        
-        Args:
-            lambda_name (str): The name of the Lambda Function
-            file_location (str): The location of the Lambda Function code
-            include_folders (list): A list of folder to include in the package
-            dependencies (list): List of dependencies to install. Default: empty list
-        """
-        
-        # Create a temporary directory for the deployment package
-        if not os.path.exists('temp'):
-            os.makedirs('temp')
-        
-        if not os.path.exists('build'):
-            os.makedirs('build')
-
-        # Copy the Lambda function to the temp directory
-        shutil.copy('../{}'.format(file_location), 'temp/')
-        
-        for f in include_folders:
-            shutil.copytree(f'../lambdas/{f}', f'temp/{f}')
-        
-        # Install dependencies (if there are any) and copy them to the temp directory
-        if len(dependencies) > 0:
-            for p in dependencies:
-                os.system("/bin/sh -c 'python -m pip install {} --target ./build'".format(p))
-            shutil.copytree('build', 'temp', dirs_exist_ok = True)
-        
-        # Create the ZIP file
-        with zipfile.ZipFile(self.app_utils.deployment_name(lambda_name), 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for root, dirs, files in os.walk('temp'):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    arcname = os.path.relpath(file_path, 'temp')
-                    zipf.write(file_path, arcname)
-
-        # Clean up temporary directory
-        if os.path.exists('temp'):
-            shutil.rmtree('temp')
-        
-        if os.path.exists('build'):
-            shutil.rmtree('build')
-        
