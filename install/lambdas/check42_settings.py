@@ -54,9 +54,9 @@ def get_settings() -> dict:
     Returns (dict): A dictionary containing the settings information 
     """
     settings = {
-            "id": None,
+            "password": None,
             "subscriber": None,
-            "schedule": None
+            "sender": None
         }
         
     try:
@@ -67,9 +67,9 @@ def get_settings() -> dict:
         
         # Check if any items exist
         if response['Items']:
-            settings['id'] = response['Items'][0]['id']
+            settings['password'] = response['Items'][0]['password']
             settings['subscriber'] = response['Items'][0]['subscriber']
-            settings['schedule'] = response['Items'][0]['schedule']
+            settings['sender'] = response['Items'][0]['sender']
             
     except ClientError as e:
         print(e)
@@ -80,23 +80,52 @@ def get_settings() -> dict:
 
 def set_settings(settings: dict) -> bool:
     """
-    Set the settings record in the DynamoDB settings table
+    Update only the provided settings for the first record in the DynamoDB settings table
     
     Args:
-        settings (dict): A dictionary containing the settings information
+        settings (dict): A dictionary containing the settings to update
         
     Returns (bool): True if updated successfully and False otherwise
     """
     try:
-        item = {
-            "id": {'S': settings['id']},
-            "subscriber": {'S': settings['subscriber']},
-            "schedule": {'S': settings['schedule']}
-        }
+        # First get the first item from the table
+        response = table.scan(
+            Limit=1
+        )
         
-        # Put item in DynamoDB
-        response = table.put_item(
-            Item=item
+        # Get the id of the first item
+        if 'Items' not in response or not response['Items']:
+            print("No items found in table")
+            return False
+            
+        item_id = response['Items'][0]['id']  # Remove ['S']
+        
+        # Dynamically build the update expression and attribute values
+        update_parts = []
+        expression_values = {}
+        
+        # For each setting provided, add it to the update expression
+        for key, value in settings.items():
+            update_parts.append(f"#{key} = :{key}")
+            expression_values[f":{key}"] = value
+        
+        if not update_parts:
+            return False
+            
+        update_expression = "SET " + ", ".join(update_parts)
+        (update_expression)
+        
+        # Create expression attribute names
+        expression_names = {f"#{key}": key for key in settings.keys()}
+        
+        # Update only the provided fields
+        response = table.update_item(
+            Key={
+                'id': item_id
+            },
+            UpdateExpression=update_expression,
+            ExpressionAttributeValues=expression_values,
+            ExpressionAttributeNames=expression_names
         )
         
         return True
@@ -121,9 +150,9 @@ def handler(event, context):
     body = None
     
     try:
-        if event['httpMethod'] == 'GET':
+        if event.get('httpMethod') == 'GET':
             ddb_response = get_settings()
-            if ddb_response['id'] is not None:
+            if ddb_response['sender'] is not None:
                 body = json.dumps(ddb_response)
             else:
                 status_code = 500
@@ -131,35 +160,20 @@ def handler(event, context):
                     'status': 'error',
                     'message': 'Settings not found'
                 }
-        elif event['httpMethod'] == 'PUT':
-            settings = event['body']
-            if not 'id' in settings or not is_valid_uuid(settings['id']):
-                errors.append('Missing or invalid id field, expected uuid4 format')
-            
-            if not 'subscriber' in settings or not validate_email_or_sns_arn(settings['subscriber']):
-                errors.append('Missing or invalid subscriber field, expected email address or SNS arn')
-            
-            if not 'schedule' in settings or not validate_schedule(settings['schedule']):
-                errors.append('Missing or invalid schedule field, expected daily or weekly')
-            
-            if len(errors) > 0:
-                status_code = 400
+        elif event.get('httpMethod') == 'PUT':
+            settings = json.loads(event['body'])
+    
+            ddb_response = set_settings(settings)
+            if ddb_response:
                 body = {
-                    'status': 'error',
-                    'message': errors
+                    'status': 'success',
+                    'message': ''
                 }
             else:
-                ddb_response = set_settings(event)
-                if ddb_response:
-                    body = {
-                        'status': 'success',
-                        'message': ''
-                    }
-                else:
-                    body = {
-                        'status': 'error',
-                        'message': 'Failed saving settings. Check the logs'
-                    }
+                body = {
+                    'status': 'error',
+                    'message': 'Failed saving settings. Check the logs'
+                }
         else:
             status_code = 400
             body = {
@@ -177,7 +191,8 @@ def handler(event, context):
     return {
         "statusCode": status_code,
         "headers": {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"  # For CORS support
         },
         "body": json.dumps(body)
     }
