@@ -33,7 +33,9 @@ class ApiStack(Stack):
             default_cors_preflight_options=apigw.CorsOptions(
                 allow_origins=apigw.Cors.ALL_ORIGINS,
                 allow_methods=apigw.Cors.ALL_METHODS,
-                allow_headers=["Content-Type", "Authorization"]
+                allow_headers=["Content-Type", "X-Amz-Date", "Authorization", "X-Api-Key", 
+                      "X-Amz-Security-Token", "X-Requested-With"],
+                allow_credentials=True
             )
         )
         
