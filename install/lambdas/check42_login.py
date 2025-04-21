@@ -59,7 +59,7 @@ def verify_credentials_and_update_token(username: str, password: str) -> tuple[b
         logger.error(f"Unexpected error: {str(e)}", exc_info=True)
         raise
 
-def lambda_handler(event, context):
+def handler(event, context):
     """
     Lambda handler for login requests
     """

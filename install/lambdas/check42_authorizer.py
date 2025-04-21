@@ -5,7 +5,7 @@ from datetime import datetime
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('check42_settings')
 
-def lambda_handler(event, context):
+def handler(event, context):
     try:
         # Extract the token from the Authorization header
         token = event.get('authorizationToken')
