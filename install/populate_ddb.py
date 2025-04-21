@@ -75,4 +75,4 @@ if checks_config['defaults']:
     item['defaults'] = {'S': json.dumps(checks_config['defaults'])}
     
 install_utils.put_item(settings_table_name, item)
-print(f'The configuration url can be found at {amplify_web_url}. Use email: {recipient_email} and password: {password} to log in')
+print(f'The configuration url can be found at {amplify_web_url}/login/login.html. Use email: {recipient_email} and password: {password} to log in')
