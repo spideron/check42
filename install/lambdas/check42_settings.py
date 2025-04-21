@@ -3,6 +3,7 @@ import boto3
 import re
 import uuid
 from botocore.exceptions import ClientError
+import hashlib
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -47,6 +48,13 @@ def validate_email_or_sns_arn(input_string: str) -> bool:
     
     return is_valid_email or is_valid_sns
 
+
+def hash_password(password):
+    hash_object = hashlib.sha256()
+    hash_object.update(password.encode('utf-8'))
+    return hash_object.hexdigest()
+
+
 def get_settings() -> dict:
     """
     Get the settings from the DynamoDB settings table
@@ -67,7 +75,10 @@ def get_settings() -> dict:
         
         # Check if any items exist
         if response['Items']:
-            settings['password'] = response['Items'][0]['password']
+            password = response['Items'][0]['password']
+            hashed_password = hash_password(password)
+            
+            settings['password'] = hashed_password 
             settings['subscriber'] = response['Items'][0]['subscriber']
             settings['sender'] = response['Items'][0]['sender']
             
