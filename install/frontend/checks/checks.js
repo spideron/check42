@@ -17,7 +17,7 @@ class ChecklistApp {
         context["httpMethod"] = "GET"
         $.ajax({
             method: 'GET',
-            url: this.apiUrl + '/checks',
+            url: this.apiUrl + 'checks',
             //data: JSON.stringify(context),
             contentType: 'application/json',
             crossDomain: true, // Enable CORS support,

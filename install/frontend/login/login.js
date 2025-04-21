@@ -6,7 +6,7 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
 
     $.ajax({
         method: 'POST',
-        url: check42.apiUrl + '/login',
+        url: check42.apiUrl + 'login',
         data: JSON.stringify({
             username: username,
             password: password

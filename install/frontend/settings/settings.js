@@ -15,7 +15,7 @@ class SettingsApp {
     fetchSettings() {
         $.ajax({
             method: 'GET',
-            url: this.apiUrl + '/settings',
+            url: this.apiUrl + 'settings',
             contentType: 'application/json',
             crossDomain: true,
             headers: {
