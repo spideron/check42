@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError
 import logging
+import hashlib
 
 # Initialize services
 dynamodb = boto3.resource('dynamodb')
@@ -30,7 +31,11 @@ def verify_credentials_and_update_token(username: str, password: str) -> tuple[b
         stored_user = response['Items'][0]
 
         # Simple raw password comparison, returning early upon failure
-        if stored_user.get('subscriber') != username or stored_user.get('password') != password:
+        hash_object = hashlib.sha256()
+        hash_object.update(password.encode('utf-8'))
+        hashed_password = hash_object.hexdigest()
+
+        if stored_user.get('subscriber') != username or stored_user.get('password') != hashed_password:
             logger.info("Login attempt failed: Invalid credentials")
             return False, None
             
