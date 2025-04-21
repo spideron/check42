@@ -27,9 +27,6 @@ amplify_app_id = amplify_web_url.split('.')[1]
 api_stack_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['apiStackNameKey'])
 api_url =  install_utils.get_cloud_formation_output(api_stack_name, ['url', 'endpoint', 'uri', 'api'])
 
-amplify_bucket_name = install_utils.get_cdk_exports_value(install_config['deploymentExports']['amplifyS3BucketName'])
-
-
 # Remove the temp folder if it exists
 if os.path.exists(temp_folder):
     shutil.rmtree(temp_folder)
@@ -47,7 +44,7 @@ with open(js_file_path, 'w') as ofile:
     ofile.write(js_file_contents)
 
 # Zip the contents of the website    
-zip_path = os.path.join(temp_folder, 'website-deploy.zip')
+zip_path = os.path.join(temp_folder, zip_file_name)
 with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
     for root, dirs, files in os.walk(temp_folder):
         for file in files:
@@ -57,4 +54,4 @@ with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
 
 
 # Deploy to Amplify
-install_utils.amplify_deploy(amplify_app_id, zip_path, amplify_bucket_name)
+install_utils.amplify_deploy(amplify_app_id, zip_path)

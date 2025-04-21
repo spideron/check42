@@ -10,7 +10,6 @@ from cdk.lambda_stack import LambdaStack
 from cdk.api_stack import ApiStack
 from cdk.events_stack import EventsStack
 from cdk.ses_stack import SESStack
-from cdk.s3_stack import S3Stack
 from cdk.amplify_stack import StaticAmplifyHostingStack
 from cdk.app_utils import AppUtils
 
@@ -87,21 +86,13 @@ ses_stack = SESStack(app, ses_stack_name,
 )
 ses_stack.create_ses_email_identity(sender_email)
 
-s3_stack_name = app_utils.get_name_with_prefix('S3Stack', stack_prefix_format)
-s3_stack = S3Stack(app, s3_stack_name,
-    env=cdk.Environment(account=account, region=region),
-    config=install_config
-)
-amplify_bucket_name = s3_stack.create_amplify_deployment_bucket()
-amplify_bucket_name_key = install_config['deploymentExports']['amplifyS3BucketName']
-export_environment_variables[amplify_bucket_name_key] = amplify_bucket_name
 
 amplify_stack_name = app_utils.get_name_with_prefix('AmplifyStack', stack_prefix_format)
 amplify_stack = StaticAmplifyHostingStack(app, amplify_stack_name,
     env=cdk.Environment(account=account, region=region),
     config=install_config
 )
-amplify_info = amplify_stack.create_amplify_static_webapp(amplify_bucket_name)
+amplify_info = amplify_stack.create_amplify_static_webapp()
 amplify_stack_name_key = install_config['deploymentExports']['amplifyStackNameKey']
 export_environment_variables[amplify_stack_name_key] = amplify_stack_name
 

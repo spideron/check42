@@ -4,6 +4,7 @@ import json
 import secrets
 import string
 import hashlib
+import requests
 
 class InstallUtils:
     def __init__(self, config: dict) -> None:
@@ -19,7 +20,6 @@ class InstallUtils:
         self.account_id = os.getenv('AWS_DEFAULT_ACCOUNT')
         self.dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         self.cfn_client = boto3.client('cloudformation', region_name=self.region)
-        self.s3_client = boto3.client('s3', region_name=self.region)
         self.amplify_client = boto3.client('amplify', region_name=self.region)
         
         deployment_temp_file_path = config['deploymentExports']['tempFileName']
@@ -152,36 +152,33 @@ class InstallUtils:
         return found_value
         
     
-    def upload_to_s3(self, local_file_path: str, s3_bucket_name: str, s3_file_path: str) -> str:
-        """
-        Upload a file to S3
-        
-        Args:
-            local_file_path (str): The local file path to upload
-            s3_bucket_name (str): S3 bucket name
-            s3_file_path (str): The location of the file on S3
-            
-        Returns (str): The uploaded file path in S3
-        """
-        
-        self.s3_client.upload_file(local_file_path, s3_bucket_name, s3_file_path)
-        return f's3://{s3_bucket_name}/{s3_file_path}'
-    
-    
-    def amplify_deploy(self, app_id: str, local_file_path: str, s3_bucket_name: str) -> None:
+    def amplify_deploy(self, app_id: str, local_zip_file: str) -> None:
         """
         Start an amplify deployment
         
         Args:
             app_id (str): The Amplify app id
-            local_file_path (str): The location of the deployment package
-            s3_bucket_name (str): S3 bucket name
+            local_zip_file (str): The location of the deployment package
         """
-        s3_file_path = f'deploy/{os.path.basename(local_file_path)}'
-        source_url = self.upload_to_s3(local_file_path, s3_bucket_name, s3_file_path)
+        branch_name = self.config['amplify']['branch']
         
-        self.amplify_client.start_deployment(
+        # Create Amplify deployment
+        with open(local_zip_file, 'rb') as zip_file:
+            create_response = self.amplify_client.create_deployment(
+                appId=app_id,
+                branchName=branch_name
+            )
+        
+        job_id = create_response['jobId']
+        upload_url = create_response['zipUploadUrl']
+        
+        # Upload the zip file
+        with open(local_zip_file, 'rb') as file_data:
+            requests.put(upload_url, data=file_data.read())
+        
+        # Start the deployment
+        start_response = self.amplify_client.start_deployment(
             appId=app_id,
-            branchName=self.config['amplify']['branch'],
-            sourceUrl=source_url
+            branchName=branch_name,
+            jobId=job_id
         )

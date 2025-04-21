@@ -15,12 +15,9 @@ class StaticAmplifyHostingStack(Stack):
         self.app_utils = AppUtils(config)
         
     
-    def create_amplify_static_webapp(self, s3_bucket_name: str) -> dict:
+    def create_amplify_static_webapp(self) -> dict:
         """
         Create Amplify static web app resources
-        
-        Args:
-            s3_bucket_name (str): The name of the S3 bucket to use for the deployment
         
         Returns (dict): A dictionary containig Amplify information
         """
@@ -36,28 +33,6 @@ class StaticAmplifyHostingStack(Stack):
             assumed_by=iam.ServicePrincipal("amplify.amazonaws.com"),
             description="Role for Amplify to deploy static website"
         )
-        
-        # Add necessary permissions to the role
-        # amplify_service_role.add_managed_policy(
-        #     iam.ManagedPolicy.from_aws_managed_policy_name("AdministratorAccess-Amplify")
-        # )
-        
-        amplify_iam_policies = self.config['amplify']['iamPolicies']
-        for amplify_iam_policy in amplify_iam_policies:
-            policy_actions = amplify_iam_policy['actions']
-            original_policy_resources = amplify_iam_policy['resources']
-            replaced_policy_resources = []
-            
-            for policy_resource in original_policy_resources:
-                r = policy_resource.replace('***AMPLIFY_BUCKET_NAME***', s3_bucket_name)
-                replaced_policy_resources.append(r)
-            
-            amplify_service_role.add_to_policy(
-                iam.PolicyStatement(
-                    actions=policy_actions,
-                    resources=replaced_policy_resources  # You can restrict this to specific buckets if needed
-                )
-            )
         
         # Create an Amplify app for manual deployments
         amplify_app = amplify.CfnApp(

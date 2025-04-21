@@ -207,38 +207,10 @@
             }
         }
     },
-    "s3": {
-        "amplifyDeploymentBucket": {
-            "name": "amplify-deploy",
-            "localFolder": "frontend"
-        }
-    },
     "amplify": {
         "websiteName": "management_site",
         "description": "Static website hosted on AWS Amplify to manage the settings",
-        "branch": "main",
-        "iamPolicies": [{
-                "name": "amplify_s3_access",
-                "actions": [
-                    "s3:GetObject",
-                    "s3:PutObject",
-                    "s3:DeleteObject",
-                    "s3:PutObjectAcl"
-                ],
-                "resources": [
-                    "arn:aws:s3:::***AMPLIFY_BUCKET_NAME***/*"
-                ]
-            },
-            {
-                "name": "amplify_s3_access_list_bucket",
-                "actions": [
-                    "s3:ListBucket"
-                ],
-                "resources": [
-                    "arn:aws:s3:::***AMPLIFY_BUCKET_NAME***"
-                ]
-            }
-        ]
+        "branch": "main"
     },
     "ses": {
         "senderEmail": "SET SENDER EMAIL ADDRESS HERE OR USE AWS_SENDER_EMAIL environment variable"
