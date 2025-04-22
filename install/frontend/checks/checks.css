@@ -2,10 +2,6 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
     background-color: #f0f2f5;
 }
 
@@ -14,9 +10,11 @@ body {
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    width: 500px; /* Changed from 300px */
+    width: 500px;
     max-width: 50%;
+    margin: 80px auto 20px auto;
 }
+
 
 .checklist {
     width: 100%;
@@ -170,5 +168,3 @@ input:checked + .slider:before {
     font-size: 0.8rem;
     transition: background-color 0.2s ease;
 }
-
-
