@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check 42 Settings</title>
     <link rel="stylesheet" href="settings.css"><link rel="stylesheet" href="navbar.css">
-    <link rel="stylesheet" href="/navbar/navbar.css">
+    <link rel="stylesheet" href="../navbar/navbar.css">
 </head>
 <body>
 <nav class="navbar">
@@ -15,13 +15,6 @@
         <li><a href="../checks/checks.html">Checks</a></li>
     </ul>
 </nav>
-<script>
-    fetch('navbar.html')
-        .then(response => response.text())
-        .then(data => {
-            document.getElementById('navbar-container').innerHTML = data;
-        });
-</script>
 <div id="success-banner" class="banner success-banner" style="display: none;">
     Successfully updated
 </div>
