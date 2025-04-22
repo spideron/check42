@@ -7,6 +7,12 @@ class SettingsApp {
 
     init() {
         this.fetchSettings();
+        // Add frequency change event listener
+        document.getElementById('save-frequency').addEventListener('click', () => {
+            const frequency = document.getElementById('frequency-select').value;
+            this.handleFrequencyChange(frequency);
+        });
+        // Existing button listeners
         document.querySelectorAll('.update-button').forEach(button => {
             button.addEventListener('click', (event) => this.updateSetting(event.target.dataset.field));
         });
@@ -66,6 +72,29 @@ class SettingsApp {
             error: (jqXHR, textStatus, errorThrown) => {
                 console.error(`Failed to update ${field}:`, jqXHR.responseText);
                 alert(`Failed to update ${field}: ` + (jqXHR.responseText || errorThrown));
+            }
+        });
+    }
+
+    // Added handleFrequencyChange method
+    handleFrequencyChange(newFrequency) {
+        $.ajax({
+            method: 'PUT',
+            url: this.apiUrl + '/schedule',
+            contentType: 'application/json',
+            data: JSON.stringify({ frequency: newFrequency }),
+            crossDomain: true,
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': this.sessionToken
+            },
+            success: (response) => {
+                console.log('Schedule update success:', response);
+                this.showSuccessBanner();
+            },
+            error: (jqXHR, textStatus, errorThrown) => {
+                console.error('Schedule update error:', errorThrown);
+                alert('Failed to update schedule: ' + (jqXHR.responseText || errorThrown));
             }
         });
     }

@@ -38,11 +38,6 @@ class ChecklistApp {
     render() {
         this.container.innerHTML = ''; // Clear previous content
 
-        document.getElementById('save-frequency').addEventListener('click', () => {
-            const frequency = document.getElementById('frequency-select').value;
-            this.handleFrequencyChange(frequency);
-        });
-
         const itemsContainer = document.createElement('div');
         itemsContainer.className = 'checklist-items';
 
@@ -139,44 +134,10 @@ class ChecklistApp {
             }
         });
     }
-
-    handleFrequencyChange(newFrequency) {
-
-        $.ajax({
-            method: 'PUT',
-            url: this.apiUrl + '/schedule',
-            contentType: 'application/json',
-            data: JSON.stringify({ frequency: newFrequency }),
-            crossDomain: true,
-            headers: {
-                'Accept': 'application/json',
-                'Authorization': this.sessionToken
-            },
-            success: (response) => {
-                console.log('Schedule update success:', response);
-
-                // Show success banner
-                const banner = document.getElementById('success-banner');
-                banner.style.display = 'block';
-                banner.style.opacity = '1';
-
-                setTimeout(() => {
-                    banner.style.opacity = '0';
-                    setTimeout(() => {
-                        banner.style.display = 'none';
-                    }, 300);
-                }, 3000);
-            },
-            error: (jqXHR, textStatus, errorThrown) => {
-                console.error('Schedule update error:', errorThrown);
-                alert('Failed to update schedule: ' + (jqXHR.responseText || errorThrown));
-            }
-        });
-    }
-
 }
 
 // Initialize the app when the page loads
 $(document).ready(() => {
     new ChecklistApp();
 });
+

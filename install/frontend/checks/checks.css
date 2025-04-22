@@ -160,28 +160,6 @@ input:checked + .slider:before {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.frequency-section {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid #e0e0e0; /* Thicker, visible divider line */
-}
-
-/* Rest of your existing CSS remains the same */
-.frequency-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 2px solid #eef2f7;
-}
-
-.frequency-input-group {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
 .save-button {
     padding: 4px 8px;
     background-color: #2196F3;
@@ -192,4 +170,5 @@ input:checked + .slider:before {
     font-size: 0.8rem;
     transition: background-color 0.2s ease;
 }
+
 

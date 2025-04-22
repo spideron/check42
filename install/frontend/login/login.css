@@ -1,6 +1,4 @@
-/* Reset and base styles */
-* {
-    margin: 0;
+n: 0;
     padding: 0;
     box-sizing: border-box;
 }
@@ -153,4 +151,5 @@ button.loading {
     cursor: pointer;
     color: #666;
 }
+
 

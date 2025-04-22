@@ -4,9 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check 42 Settings</title>
-    <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="settings.css"><link rel="stylesheet" href="navbar.css">
+    <link rel="stylesheet" href="/navbar/navbar.css">
 </head>
 <body>
+<nav class="navbar">
+    <ul>
+        <li><a href="../login/login.html">Login</a></li>
+        <li><a href="../settings/settings.html">Settings</a></li>
+        <li><a href="../checks/checks.html">Checks</a></li>
+    </ul>
+</nav>
+<script>
+    fetch('navbar.html')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('navbar-container').innerHTML = data;
+        });
+</script>
 <div id="success-banner" class="banner success-banner" style="display: none;">
     Successfully updated
 </div>
@@ -14,6 +29,18 @@
     <div class="page-header">
         <h1 class="title">Check 42 Settings</h1>
     </div>
+
+    <div class="form-group frequency-container">
+        <label for="frequency-select">How often do you want to run the audit?</label>
+        <div class="input-group">
+            <select id="frequency-select" class="frequency-dropdown">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+            </select>
+            <button id="save-frequency" class="update-button">Save</button>
+        </div>
+    </div>
+
     <div id="settings-form">
         <div class="form-group">
             <label for="password">Password:</label>
