@@ -62,9 +62,7 @@ def get_settings() -> dict:
     Returns (dict): A dictionary containing the settings information 
     """
     settings = {
-            "password": None,
             "subscriber": None,
-            "sender": None
         }
         
     try:
@@ -74,13 +72,8 @@ def get_settings() -> dict:
         )
         
         # Check if any items exist
-        if response['Items']:
-            password = response['Items'][0]['password']
-            hashed_password = hash_password(password)
-            
-            settings['password'] = hashed_password 
+        if response['Items']:    
             settings['subscriber'] = response['Items'][0]['subscriber']
-            settings['sender'] = response['Items'][0]['sender']
             
     except ClientError as e:
         print(e)
@@ -117,6 +110,8 @@ def set_settings(settings: dict) -> bool:
         
         # For each setting provided, add it to the update expression
         for key, value in settings.items():
+            if key == 'password':
+                value = hash_password(value)
             update_parts.append(f"#{key} = :{key}")
             expression_values[f":{key}"] = value
         
@@ -163,7 +158,7 @@ def handler(event, context):
     try:
         if event.get('httpMethod') == 'GET':
             ddb_response = get_settings()
-            if ddb_response['sender'] is not None:
+            if ddb_response['subscriber'] is not None:
                 body = json.dumps(ddb_response)
             else:
                 status_code = 500
