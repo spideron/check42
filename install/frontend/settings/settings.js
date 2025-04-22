@@ -32,11 +32,8 @@ class SettingsApp {
     }
 
     populateForm(settings) {
-        console.log(settings)
         const parsedSettings = JSON.parse(settings);
-        console.log(parsedSettings)
-        document.getElementById('password').placeholder = parsedSettings.password ? '********' : 'No password set';
-        document.getElementById('sender').placeholder = parsedSettings.sender || 'No sender set';
+        document.getElementById('password').placeholder = '********';
         document.getElementById('subscriber').placeholder = parsedSettings.subscriber || 'No subscriber set';
     }
 
