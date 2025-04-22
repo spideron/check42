@@ -1,8 +1,3 @@
-body {
-    margin: 0;
-    padding-top: 60px; /* Height of navbar plus some padding */
-}
-
 .navbar {
     background-color: #333;
     padding: 15px 0;
