@@ -198,7 +198,7 @@
             },
             "run": {
                 "lambda_function": "run",
-                "methods": ["GET"],
+                "methods": ["GET", "POST"],
                 "authorizer": true
             },
             "login": {
