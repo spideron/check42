@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title>Check 42 Settings</title>
     <link rel="stylesheet" href="settings.css"><link rel="stylesheet" href="navbar.css">
     <link rel="stylesheet" href="../navbar/navbar.css">
 </head>
@@ -20,16 +20,25 @@
 </div>
 <div class="container">
     <div class="page-header">
-        <h1 class="title">Check 42 Settings</h1>
+        <h1 class="title">Settings</h1>
     </div>
 
     <div class="form-group frequency-container">
         <label for="frequency-select">How often do you want to run the audit?</label>
-        <div class="input-group">
+        <div class="input-group schedule-group">
             <select id="frequency-select" class="frequency-dropdown">
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
             </select>
+            <span class="time-label">at</span>
+            <select id="hour-select" class="time-dropdown">
+                <!-- Hours will be populated by JavaScript -->
+            </select>
+            <span class="time-label">:</span>
+            <select id="minute-select" class="time-dropdown">
+                <!-- Minutes will be populated by JavaScript -->
+            </select>
+            <span class="time-label">UTC</span>
             <button id="save-frequency" class="update-button">Save</button>
         </div>
     </div>
