@@ -7,6 +7,12 @@ from lib.mailer import Mailer
 from lib.logger import Logger
 from lib.settings import Settings
 
+status_code = 200
+response_body = {
+    'status': 'success',
+    'message': ''
+}
+
 def get_checks():
     """
     Get the check items from DynamoDB
@@ -28,9 +34,11 @@ def get_checks():
     
     except ClientError as e:
         print("Error: {}".format(e.response['Error']['Message']))
+        status_code = 500
         raise(e)
     except Exception as e:
         print("Error: {}".format(str(e)))
+        status_code = 500
         raise(e)
 
 
@@ -55,6 +63,7 @@ def get_settings() -> Settings:
             settings = Settings.from_query(response['Items'][0])
             
     except ClientError as e:
+        status_code = 500
         print(e)
     
     
@@ -93,3 +102,11 @@ def run_checks() -> None:
         
 def handler(event, context):
     run_checks()
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"  # For CORS support
+        },
+        "body": json.dumps(response_body)
+    }
