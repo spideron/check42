@@ -71,7 +71,6 @@ def update_rule(schedule=None):
     
     return rule_details
 
-
 def handler(event, context):
     status_code = 200
     body = None
@@ -86,16 +85,25 @@ def handler(event, context):
                 status_code = 500
            
         elif event['httpMethod'] == 'PUT':
-            request_body = event['body']
-            schedule = json.loads(request_body)["frequency"]
-            if schedule == 'daily':
-                schedule_expression = "cron(0 0 * * ? *)"
-            elif schedule == 'weekly':
-                schedule_expression = "cron(0 0 * * ? 0)"
-            else:
-                status_code = 400
-                error = "Unknown {0} schedule. Expecting daily or weekly".format(schedule)
+            request_body = json.loads(event['body'])
+            frequency = request_body["frequency"]
+            hour = request_body["hour"]
+            minute = request_body["minute"]
             
+            # Validate hour and minute
+            if not (0 <= hour <= 23 and 0 <= minute <= 59):
+                status_code = 400
+                error = "Invalid time. Hour must be 0-23 and minute must be 0-59"
+            else:
+                # For daily: runs every day at the specified time
+                # For weekly: runs every Sunday at the specified time
+                if frequency == 'daily':
+                    schedule_expression = f"cron({minute} {hour} ? * * *)"
+                elif frequency == 'weekly':
+                    schedule_expression = f"cron({minute} {hour} ? * SUN *)"
+                else:
+                    status_code = 400
+                    error = f"Unknown {frequency} schedule. Expecting daily or weekly"
             
             if error is not None:
                 body = {
