@@ -3,6 +3,7 @@ class SettingsApp {
         this.apiUrl = check42.apiUrl;
         this.sessionToken = localStorage.getItem('token');
         this.init();
+        this.initTimeSelectors();
     }
 
     init() {
@@ -17,6 +18,26 @@ class SettingsApp {
             button.addEventListener('click', (event) => this.updateSetting(event.target.dataset.field));
         });
     }
+
+    initTimeSelectors() {
+        const hourSelect = document.getElementById('hour-select');
+        const minuteSelect = document.getElementById('minute-select');
+
+        // Populate hours (00-23)
+        for (let i = 0; i < 24; i++) {
+            const hour = i.toString().padStart(2, '0');
+            const option = new Option(hour, hour);
+            hourSelect.appendChild(option);
+        }
+
+        // Populate minutes (00-59)
+        for (let i = 0; i < 60; i++) {
+            const minute = i.toString().padStart(2, '0');
+            const option = new Option(minute, minute);
+            minuteSelect.appendChild(option);
+        }
+    }
+
 
     fetchSettings() {
         $.ajax({
@@ -41,6 +62,12 @@ class SettingsApp {
         const parsedSettings = JSON.parse(settings);
         document.getElementById('password').placeholder = '********';
         document.getElementById('subscriber').placeholder = parsedSettings.subscriber || 'No subscriber set';
+        // Set frequency and time if available
+        if (parsedSettings.schedule) {
+            document.getElementById('frequency-select').value = parsedSettings.schedule.frequency;
+            document.getElementById('hour-select').value = parsedSettings.schedule.hour.toString().padStart(2, '0');
+            document.getElementById('minute-select').value = parsedSettings.schedule.minute.toString().padStart(2, '0');
+        }
     }
 
     updateSetting(field) {
@@ -76,13 +103,19 @@ class SettingsApp {
         });
     }
 
-    // Added handleFrequencyChange method
     handleFrequencyChange(newFrequency) {
+        const hour = document.getElementById('hour-select').value;
+        const minute = document.getElementById('minute-select').value;
+
         $.ajax({
             method: 'PUT',
             url: this.apiUrl + '/schedule',
             contentType: 'application/json',
-            data: JSON.stringify({ frequency: newFrequency }),
+            data: JSON.stringify({
+                frequency: newFrequency,
+                hour: parseInt(hour),
+                minute: parseInt(minute)
+            }),
             crossDomain: true,
             headers: {
                 'Accept': 'application/json',
@@ -93,8 +126,10 @@ class SettingsApp {
                 this.showSuccessBanner();
             },
             error: (jqXHR, textStatus, errorThrown) => {
-                console.error('Schedule update error:', errorThrown);
-                alert('Failed to update schedule: ' + (jqXHR.responseText || errorThrown));
+                if (!this.handleAjaxError(jqXHR)) {
+                    console.error('Schedule update error:', errorThrown);
+                    alert('Failed to update schedule: ' + (jqXHR.responseText || errorThrown));
+                }
             }
         });
     }
