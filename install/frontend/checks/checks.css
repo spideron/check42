@@ -156,6 +156,7 @@ input:checked + .slider:before {
     background-color: #4CAF50;
     color: white;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: opacity 0.3s ease-in-out;
 }
 
 .save-button {
@@ -167,4 +168,42 @@ input:checked + .slider:before {
     cursor: pointer;
     font-size: 0.8rem;
     transition: background-color 0.2s ease;
+}
+
+.run {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #eef2f7;
+}
+
+.run-button, .processing-button {
+    /* Shared styles for both buttons */
+    display: inline-block; /* This is the key addition */
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    transition: background-color 0.2s ease;
+    min-width: 120px; /* Ensure both buttons have same minimum width */
+}
+
+.run-button {
+    background-color: #4CAF50;
+    cursor: pointer;
+}
+
+.run-button:hover {
+    background-color: #45a049;
+}
+
+.run-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.processing-button {
+    background-color: #2196F3;
+    cursor: not-allowed;
 }
