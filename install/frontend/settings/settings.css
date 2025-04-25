@@ -98,3 +98,26 @@ input[type="email"] {
     border: 1px solid #ccc;
     border-radius: 4px;
 }
+
+.schedule-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.time-label {
+    color: #333;
+    font-weight: normal;
+}
+
+.time-dropdown {
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 70px;
+}
+
+.frequency-dropdown {
+    min-width: 100px;
+}
