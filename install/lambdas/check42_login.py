@@ -41,12 +41,20 @@ def verify_credentials_and_update_token(username: str, password: str) -> tuple[b
             
         # Generate new session token
         session_token = str(uuid.uuid4())
+
+        # Calculate token expiration (60 minutes from now)
+        current_time = datetime.utcnow()
+        expiration_time = current_time + timedelta(minutes=60)
+        
+        # Format expiration time as ISO format string
+        expiration_str = expiration_time.strftime('%Y-%m-%d %H:%M:%S')
         
         # Update DynamoDB with new token
         table.put_item(
             Item={
                 **stored_user,  # Keep all existing fields
-                'session_token': session_token  # Update/add token field
+                'session_token': session_token,  # Update/add token field
+                'token_expiration': expiration_str  # Add expiration timestamp
             }
         )
         
