@@ -20,12 +20,26 @@ def handler(event, context):
             first_item = response['Items'][0]
             stored_token = first_item.get('session_token')
             if stored_token and stored_token == token:
-                # Optional: Check if token is expired
-                if 'expiry_time' in first_item and first_item['expiry_time'] < datetime.now().timestamp():
-                    return generate_policy('Deny', event['methodArn'])
+                # Get current time and stored expiration time
+                current_time = datetime.utcnow()
+                stored_expiration_str = first_item.get('token_expiration')
                 
-                # Generate IAM policy
-                return generate_policy('Allow', event['methodArn'])
+                if stored_expiration_str:
+                    # Convert stored string to datetime object
+                    stored_expiration = datetime.strptime(stored_expiration_str, '%Y-%m-%d %H:%M:%S')
+                    
+                    print(f"Current time (UTC): {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+                    print(f"Token expires (UTC): {stored_expiration.strftime('%Y-%m-%d %H:%M:%S')}")
+                    
+                    if current_time >= stored_expiration:
+                        print(f"Token expired. Expired {current_time - stored_expiration} ago")
+                        return generate_policy('Deny', event['methodArn'])
+                    
+                    print("Token is valid")
+                    return generate_policy('Allow', event['methodArn'])
+                else:
+                    print("No expiration time found")
+                    return generate_policy('Deny', event['methodArn'])
 
         return generate_policy('Deny', event['methodArn'])
 
