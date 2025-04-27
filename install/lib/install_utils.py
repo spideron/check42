@@ -21,9 +21,7 @@ class InstallUtils:
         self.dynamodb_client = boto3.client('dynamodb', region_name=self.region)
         self.cfn_client = boto3.client('cloudformation', region_name=self.region)
         self.amplify_client = boto3.client('amplify', region_name=self.region)
-        
-        deployment_temp_file_path = config['deploymentExports']['tempFileName']
-        self.cdk_exports = json.loads(open(deployment_temp_file_path).read())
+        self.cdk_exports = None
 
 
     def get_cdk_exports_value(self, key: str) -> str:
@@ -35,6 +33,10 @@ class InstallUtils:
             
         Returns (str): The value from the exports dictionary
         """
+        if self.cdk_exports is None:
+            deployment_temp_file_path = self.config['deploymentExports']['tempFileName']
+            self.cdk_exports = json.loads(open(deployment_temp_file_path).read())
+        
         return self.cdk_exports[key]
     
     def get_name_with_prefix(self, name: str):
@@ -123,6 +125,45 @@ class InstallUtils:
         response = self.dynamodb_client.put_item(
             TableName=table_name,
             Item=item
+        )
+    
+    def update_password(self, new_password: str) -> None:
+        """
+        Update the password in the settings table
+        
+        Args:
+            new_password (str): The new password
+        """
+        settings_table_name = self.get_name_with_prefix('settings')
+        response = self.dynamodb_client.scan(
+            TableName=settings_table_name,
+            Limit=1  # We expect only one record
+        )
+        
+        if 'Items' not in response or len(response['Items']) == 0:
+            raise Exception(f"No records found in the table {settings_table_name}")
+        
+        record = response['Items'][0]
+        table_description = self.dynamodb_client.describe_table(TableName=settings_table_name)
+        key_schema = table_description['Table']['KeySchema']
+        
+        # Build the key dictionary for the update operation
+        key = {}
+        for key_element in key_schema:
+            key_name = key_element['AttributeName']
+            if key_name in record:
+                key[key_name] = record[key_name]
+            else:
+                raise Exception(f"Key attribute {key_name} not found in record")
+        
+        update_response = self.dynamodb_client.update_item(
+            TableName=settings_table_name,
+            Key=key,
+            UpdateExpression="SET password = :newpassword",
+            ExpressionAttributeValues={
+                ':newpassword': {'S': new_password}
+            },
+            ReturnValues="UPDATED_NEW"
         )
 
     
