@@ -62,7 +62,7 @@ class LambdaStack(Stack):
             function_dependencies = function_conf['dependencies']
         
         if 'environment' in function_conf:
-            function_environment = function_conf['environment']
+            function_environment = self.app_utils.key_replacer_dict(function_conf['environment'])
         
         if 'includeFolders' in function_conf:
             include_folders.extend(function_conf['includeFolders'])

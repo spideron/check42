@@ -52,7 +52,10 @@
                         ],
                         "resources": ["*"]
                     }
-                ]
+                ],
+                "environment": {
+                    "settings_table_name": "***PREFIX***_settings"
+                }
             },
             "checks": {
                 "functionName": "checks",

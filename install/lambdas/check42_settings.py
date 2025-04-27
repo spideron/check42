@@ -1,58 +1,17 @@
+import os
 import json
 import boto3
-import re
-import uuid
 from botocore.exceptions import ClientError
-import hashlib
+from lib.settings import Settings
+from lib.utils import Utils
+
+
+utils = Utils()
 
 # Initialize DynamoDB client
+table_name = os.environ.get('settings_table_name')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('check42_settings')
-
-def is_valid_uuid(uuid_string: str) -> bool:
-    """
-    Check if the provided inout is a valid uuid string
-    
-    Returns (bool): True if the input is a valid uuid4 string and false otherwise
-    """
-    regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
-    match = regex.match(uuid_string)
-    return bool(match)
-    
-def validate_schedule(schedule: str) -> bool:
-    """
-    Check if the provided input is a valid schedule
-    """
-    
-    s = schedule.lower()
-    return s in ['daily', 'weekly']
-
-
-def validate_email_or_sns_arn(input_string: str) -> bool:
-    """
-    Check if the provided input is a valid email address or an AWS SNS arn
-    
-    Returns (bool): True if the provided input is either a valid email address or an AWS SNS arn, False otherwise
-    """
-    
-    # Email pattern
-    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    
-    # SNS ARN pattern
-    # Format: arn:aws:sns:[region]:[account-id]:[topic-name]
-    sns_pattern = r'^arn:aws:sns:[a-z0-9-]+:[0-9]{12}:[a-zA-Z0-9-_]+$'
-    
-    # Check if the input matches either pattern
-    is_valid_email = bool(re.match(email_pattern, input_string))
-    is_valid_sns = bool(re.match(sns_pattern, input_string))
-    
-    return is_valid_email or is_valid_sns
-
-
-def hash_password(password):
-    hash_object = hashlib.sha256()
-    hash_object.update(password.encode('utf-8'))
-    return hash_object.hexdigest()
+table = dynamodb.Table(table_name)
 
 
 def get_settings() -> dict:
@@ -111,7 +70,7 @@ def set_settings(settings: dict) -> bool:
         # For each setting provided, add it to the update expression
         for key, value in settings.items():
             if key == 'password':
-                value = hash_password(value)
+                value = utils.hash_password(value)
             update_parts.append(f"#{key} = :{key}")
             expression_values[f":{key}"] = value
         
@@ -140,15 +99,6 @@ def set_settings(settings: dict) -> bool:
         print(e)
         return False
 
-def set_schedule(schedule: str) -> None:
-    """
-    Set an EventBridge schedule
-    
-    Args:
-        schedule (str): The schedule to set - daily or weekly
-    """
-    
-    # TODO: code to work with EventBridge to set the schedule
 
 def handler(event, context):
     errors=[]

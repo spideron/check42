@@ -45,7 +45,6 @@ class AppUtils:
             
         Returns (list): A list of the original strings after replacement
         """
-        
         replaced_resources = []
         
         for resource in resources:
@@ -55,5 +54,26 @@ class AppUtils:
             r = r.replace('***SENDER_EMAIL***', self.config['ses']['senderEmail'])
             
             replaced_resources.append(r)
+        
+        return replaced_resources
+    
+    def key_replacer_dict(self, resources: dict) -> dict:
+        """
+        Replace known keys with vaules
+        
+        Args:
+            resources (dict): A dictionary of string to replace the keys
+            
+        Returns (dict): A dictionary of the original strings after replacement
+        """
+        replaced_resources = {}
+        
+        for resource_key, resource_value in resources.items():
+            r = resource_value.replace('***REGION***', self.config['region'])
+            r = r.replace('***ACCOUNT_ID***', self.config['account'])
+            r = r.replace('***PREFIX***', self.prefix)
+            r = r.replace('***SENDER_EMAIL***', self.config['ses']['senderEmail'])
+            
+            replaced_resources[resource_key] = r
         
         return replaced_resources
