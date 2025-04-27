@@ -2,6 +2,9 @@ import json
 import boto3
 import logging
 from botocore.exceptions import ClientError
+from lib.utils import Utils
+
+utils = Utils()
 
 eventbridge = boto3.client('events')
 rule_name = "DailyBestPracticesCheck"
@@ -131,11 +134,5 @@ def handler(event, context):
             'message': 'Internal server error. Check the logs'
         }
     
-    return {
-        "statusCode": status_code,
-        "headers": {
-            "Content-Type": "application/json",
-             "Access-Control-Allow-Origin": "*"  # For CORS support
-        },
-        "body": json.dumps(body)
-    }
+    response = utils.lambda_response(body, status_code)
+    return response

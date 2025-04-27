@@ -75,7 +75,10 @@
                     "resources": [
                         "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_checks"
                     ]
-                }]
+                }],
+                "environment": {
+                    "checks_table_name": "***PREFIX***_checks"
+                }
             },
             "run": {
                 "timeout": 60,
@@ -139,7 +142,12 @@
                         ],
                         "resources": ["*"]
                     }
-                ]
+                ],
+                "environment": {
+                    "checks_table_name": "***PREFIX***_checks",
+                    "settings_table_name": "***PREFIX***_settings",
+                    "log_table_name": "***PREFIX***_log"
+                }
             },
             "schedule": {
                 "functionName": "schedule",
@@ -160,7 +168,10 @@
                     "resources": [
                         "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_settings"
                     ]
-                }]
+                }],
+                "environment": {
+                    "settings_table_name": "***PREFIX***_settings"
+                }
             }
         }
     },
@@ -181,7 +192,10 @@
                     "arn:aws:dynamodb:***REGION***:***ACCOUNT_ID***:table/***PREFIX***_settings"
                 ]
             }],
-            "ttl": 600
+            "ttl": 600,
+            "environment": {
+                "settings_table_name": "***PREFIX***_settings"
+            }
         },
         "resources": {
             "settings": {

@@ -83,8 +83,12 @@ class ApiStack(Stack):
         function_name = self.app_utils.get_name_with_prefix(authorizer_config['functionName'])
         function_policies = []
         include_folders = []
+        function_environment = None
         function_policies = authorizer_config['iamPolicies']
         file_name = self.app_utils.deployment_name(function_name)
+        
+        if 'environment' in authorizer_config:
+            function_environment = self.app_utils.key_replacer_dict(authorizer_config['environment'])
         
         self.lambda_utils.create_deployment_package(file_name, function_file_location, include_folders)
         
@@ -124,6 +128,7 @@ class ApiStack(Stack):
             function_name = function_name,
             runtime=_lambda.Runtime.PYTHON_3_10,
             handler=f'{function_name}.handler',
+            environment = function_environment,
             code=_lambda.Code.from_asset(file_name),
             role=lambda_role
         )

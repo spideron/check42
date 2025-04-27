@@ -1,9 +1,11 @@
+import os
 import json
 import boto3
 from datetime import datetime
 
+table_name = os.environ.get('settings_table_name')
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('check42_settings')
+table = dynamodb.Table(table_name)
 
 def handler(event, context):
     try:
@@ -47,7 +49,7 @@ def handler(event, context):
         print(f"Error: {str(e)}")
         return generate_policy('Deny', event['methodArn'])
 
-def generate_policy( effect, resource):
+def generate_policy(effect, resource):
     auth_response = {
         'policyDocument': {
             'Version': '2012-10-17',

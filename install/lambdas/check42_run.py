@@ -6,78 +6,17 @@ from modules.basic import Basic
 from lib.mailer import Mailer
 from lib.logger import Logger
 from lib.settings import Settings
+from lib.utils import Utils
 
-status_code = 200
-response_body = {
-    'status': 'success',
-    'message': ''
-}
-
-def get_checks():
-    """
-    Get the check items from DynamoDB
-    
-    Returns (list): List of check items. None in case of an error
-    """
-    try:
-        dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table('check42_checks')
-        response = table.scan()
-        
-        # Get the items from the response
-        items = response.get('Items', [])
-        
-        # Sort the itmes to get a consistent check list
-        sorted_items = sorted(items, key=lambda x: x.get('name', ''))
-        
-        return sorted_items
-    
-    except ClientError as e:
-        print("Error: {}".format(e.response['Error']['Message']))
-        status_code = 500
-        raise(e)
-    except Exception as e:
-        print("Error: {}".format(str(e)))
-        status_code = 500
-        raise(e)
-
-
-def get_settings() -> Settings:
-    """
-    Get the settings from the DynamoDB settings table
-    
-    Returns (dict): A dictionary containing the settings information 
-    """
-    settings = None
-        
-    try:
-        dynamodb = boto3.resource('dynamodb')
-        table = dynamodb.Table('check42_settings')
-        
-        # Scan the table and limit to 1 item
-        response = table.scan(
-            Limit=1
-        )
-        
-        if response['Items']:
-            settings = Settings.from_query(response['Items'][0])
-            
-    except ClientError as e:
-        status_code = 500
-        print(e)
-    
-    
-    return settings
-    
+utils = Utils()
 
 def run_checks() -> None:
     """
     Run the scheduled checks
     """
-    
     results = []
-    checks = get_checks()
-    settings = get_settings()
+    checks =  utils.get_checks()
+    settings = utils.get_settings()
     
     if checks is not None:
         basic_checks = [item for item in checks if item['module'] == 'basic']
@@ -88,7 +27,7 @@ def run_checks() -> None:
             results.extend(basic_checks_results)
     
     # Log the results
-    logs_table_name = 'check42_log'
+    logs_table_name = utils.log_table_name
     logger = Logger(logs_table_name, checks)
     logger.log_checks(results)
     
@@ -101,12 +40,12 @@ def run_checks() -> None:
         
         
 def handler(event, context):
-    run_checks()
-    return {
-        "statusCode": status_code,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"  # For CORS support
-        },
-        "body": json.dumps(response_body)
+    response_body = {
+        'status': 'success',
+        'message': ''
     }
+
+    run_checks()
+    
+    response = utils.lambda_response(response_body)
+    return response
